@@ -17,7 +17,7 @@ import os
 import numpy as np
 import pandas as pd
 import torch
-from custom.models.nlp_models import BertModel, GPTModel
+from custom.models.nlp_models import BertModel, GPTModel, XLMRobertaModel
 from custom.utils.data_sequence import DataSequence
 from seqeval.metrics import classification_report
 from torch.optim import AdamW
@@ -39,9 +39,9 @@ class NLPLearner(Learner):
     def __init__(
         self,
         data_path: str,
+        model_path: str,
         learning_rate: float = 1e-5,
         batch_size: int = 32,
-        model_name: str = "bert-base-uncased",
         num_labels: int = 3,
         ignore_token: int = -100,
         aggregation_epochs: int = 1,
@@ -69,7 +69,7 @@ class NLPLearner(Learner):
         super().__init__()
         self.aggregation_epochs = aggregation_epochs
         self.train_task_name = train_task_name
-        self.model_name = model_name
+        self.model_path = model_path
         self.num_labels = num_labels
         self.ignore_token = ignore_token
         self.lr = learning_rate
@@ -139,20 +139,83 @@ class NLPLearner(Learner):
         # initialize model
         self.log_info(
             fl_ctx,
-            f"Creating model {self.model_name}",
+            f"Creating model {self.model_path}",
         )
-        if self.model_name == "bert-base-uncased":
-            self.model = BertModel(model_name=self.model_name, num_labels=self.num_labels)
-        elif self.model_name == "gpt2":
-            self.model = GPTModel(model_name=self.model_name, num_labels=self.num_labels)
+        if self.model_path == "bert-base-uncased":
+            self.model = BertModel(model_name=self.model_path, num_labels=self.num_labels)
+        elif self.model_path == "gpt2":
+            self.model = GPTModel(model_name=self.model_path, num_labels=self.num_labels)
+        elif self.model == 'xlmroberta_large':
+            self.model = XLMRobertaModel(model_name=self.model_path)
         else:
             self.system_panic(f"Model {self.model} not supported!", fl_ctx)
             return make_reply(ReturnCode.EXECUTION_EXCEPTION)
-        tokenizer = self.model.tokenizer
 
-        # set data
-        train_dataset = DataSequence(df_train, self.labels_to_ids, tokenizer=tokenizer, ignore_token=self.ignore_token)
-        valid_dataset = DataSequence(df_valid, self.labels_to_ids, tokenizer=tokenizer, ignore_token=self.ignore_token)
+        #tokenizer = self.model.tokenizer
+
+         # Otherwise, we tokenize every text, then concatenate them together before splitting them in smaller parts.
+        # We use `return_special_tokens_mask=True` because DataCollatorForLanguageModeling (see below) is more
+        # efficient when it receives the `special_tokens_mask`.
+        def tokenize_function(examples):
+            return tokenizer(examples[text_column_name], return_special_tokens_mask=True)
+
+        with accelerator.main_process_first():
+            tokenized_datasets = raw_datasets.map(
+                tokenize_function,
+                batched=True,
+                num_proc=args.preprocessing_num_workers,
+                remove_columns=column_names,
+                load_from_cache_file=not args.overwrite_cache,
+                desc="Running tokenizer on every text in dataset",
+            )
+
+
+                # Main data processing function that will concatenate all texts from our dataset and generate chunks of
+        # max_seq_length.
+        def group_texts(examples):
+            # Concatenate all texts.
+            concatenated_examples = {k: list(chain(*examples[k])) for k in examples.keys()}
+            total_length = len(concatenated_examples[list(examples.keys())[0]])
+            # We drop the small remainder, and if the total_length < max_seq_length  we exclude this batch and return an empty dict.
+            # We could add padding if the model supported it instead of this drop, you can customize this part to your needs.
+            total_length = (total_length // max_seq_length) * max_seq_length
+            # Split by chunks of max_len.
+            result = {
+                k: [t[i : i + max_seq_length] for i in range(0, total_length, max_seq_length)]
+                for k, t in concatenated_examples.items()
+            }
+            return result
+
+        # Note that with `batched=True`, this map processes 1,000 texts together, so group_texts throws away a
+        # remainder for each of those groups of 1,000 texts. You can adjust that batch_size here but a higher value
+        # might be slower to preprocess.
+        #
+        # To speed up this part, we use multiprocessing. See the documentation of the map method for more information:
+        # https://huggingface.co/docs/datasets/process#map
+
+        with accelerator.main_process_first():
+            tokenized_datasets = tokenized_datasets.map(
+                group_texts,
+                batched=True,
+                num_proc=args.preprocessing_num_workers,
+                load_from_cache_file=not args.overwrite_cache,
+                desc=f"Grouping texts in chunks of {max_seq_length}",
+            )
+
+        train_dataset = tokenized_datasets["train"]
+        eval_dataset = tokenized_datasets["validation"]
+        
+        # Data collator
+        # This one will take care of randomly masking the tokens.
+        data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm_probability=args.mlm_probability)
+
+        # DataLoaders creation:
+        train_dataloader = DataLoader(
+            train_dataset, shuffle=True, collate_fn=data_collator, batch_size=args.per_device_train_batch_size
+        )
+        eval_dataloader = DataLoader(eval_dataset, collate_fn=data_collator, batch_size=args.per_device_eval_batch_size)
+
+        
         self.train_loader = DataLoader(train_dataset, num_workers=2, batch_size=self.bs, shuffle=True)
         self.valid_loader = DataLoader(valid_dataset, num_workers=2, batch_size=self.bs, shuffle=False)
         self.log_info(
