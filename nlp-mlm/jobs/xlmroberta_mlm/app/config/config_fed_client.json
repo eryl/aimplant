@@ -1,7 +1,7 @@
 {
   "format_version": 2,
 
-  "DATASET_ROOT": "/data/NCBI-disease",
+  "DATASET_ROOT": "fedhealth_dataset",
 
   "executors": [
     {
@@ -29,11 +29,11 @@
       "id": "nlp-learner",
       "path": "custom.learners.nlp_learner.NLPLearner",
       "args": {
-        "data_path": "{DATASET_ROOT}/4_split",
-        "model_path": "models/xlmroberta_large",
+        "data_path": "/home/ubuntu/src/aimplant/fedhealth_mlm_data",
+        "model_path": "/home/ubuntu/src/aimplant/nlp-mlm/models/xlm-roberta",
+        "config_path": "/home/ubuntu/src/aimplant/nlp-mlm/configs/base_config.py",
         "learning_rate": 1e-5,
         "batch_size": 16,
-        "num_labels": 3,
         "aggregation_epochs": 1
       }
     }

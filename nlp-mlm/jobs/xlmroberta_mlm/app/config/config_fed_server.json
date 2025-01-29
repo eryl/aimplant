@@ -15,8 +15,7 @@
         "model": {
           "path": "custom.models.nlp_models.XLMRobertaModel",
           "args": {
-            "num_labels": 3,
-            "model_name": "xlmroberta_large"
+            "model_path": "/home/ubuntu/src/aimplant/nlp-mlm/models/xlm-roberta"
           }
         }
       }
