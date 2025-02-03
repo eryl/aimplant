@@ -31,7 +31,7 @@
       "args": {
         "data_path": "/home/ubuntu/src/aimplant/fedhealth_mlm_data",
         "model_path": "/home/ubuntu/src/aimplant/nlp-mlm/models/xlm-roberta",
-        "config_path": "/home/ubuntu/src/aimplant/nlp-mlm/configs/base_config.py",
+        "config_path": "/home/ubuntu/src/aimplant/nlp-mlm/configs/cco-dsv.json",
         "learning_rate": 1e-5,
         "batch_size": 16,
         "aggregation_epochs": 1

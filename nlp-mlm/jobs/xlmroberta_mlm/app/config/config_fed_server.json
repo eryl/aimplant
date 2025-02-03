@@ -1,6 +1,6 @@
 {
   "format_version": 2,
-  "min_clients": 4,
+  "min_clients": 2,
   "num_rounds": 50,
   "server": {
     "heart_beat_timeout": 600
@@ -15,7 +15,8 @@
         "model": {
           "path": "custom.models.nlp_models.XLMRobertaModel",
           "args": {
-            "model_path": "/home/ubuntu/src/aimplant/nlp-mlm/models/xlm-roberta"
+            "model_path": "/home/ubuntu/src/aimplant/nlp-mlm/models/xlm-roberta",
+            "config_path": "/home/ubuntu/src/aimplant/nlp-mlm/configs/cco-dsv.json"
           }
         }
       }
