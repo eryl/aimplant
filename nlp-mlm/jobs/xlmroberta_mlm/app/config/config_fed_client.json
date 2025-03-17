@@ -33,8 +33,7 @@
         "model_path": "/home/ubuntu/src/aimplant/nlp-mlm/models/xlm-roberta",
         "config_path": "/home/ubuntu/src/aimplant/nlp-mlm/configs/cco-dsv.json",
         "learning_rate": 1e-5,
-        "batch_size": 16,
-        "aggregation_epochs": 1
+        "batch_size": 16
       }
     }
   ]
