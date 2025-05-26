@@ -13,10 +13,12 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+import datetime
 import math
 import os
 from pathlib import Path
 from itertools import chain
+import time
 from typing import Optional, Literal, Union, TypeVar, Type
 import importlib
 
@@ -73,8 +75,10 @@ class XLMRobertaModel(torch.nn.Module):
         self.config = get_config(config_path)
         self.training_args = self.config.training_args
         self.peft_config = self.config.lora_config
-        self.model = get_peft_model(self.base_model, self.peft_config)
-        self.model.print_trainable_parameters()
+        # Test whether LoRA is causing the issues
+        #self.model = get_peft_model(self.base_model, self.peft_config)
+        #self.model.print_trainable_parameters()
+        self.model = self.base_model
         self.current_step = 0
         self.aggregation_epochs = self.training_args.aggregation_epochs
         
@@ -112,6 +116,10 @@ class XLMRobertaModel(torch.nn.Module):
         # If we're using tracking, we also need to initialize it here and it will by default pick up all supported trackers
         # in the environment
         accelerator_log_kwargs = {}
+        
+        with open(os.path.join(app_dir, "trace.txt"), 'a') as fp:
+            timestamp = datetime.datetime.now()
+            fp.write(f"{timestamp}\n")
         
         self.accelerator = Accelerator(gradient_accumulation_steps=self.training_args.gradient_accumulation_steps, **accelerator_log_kwargs)
 
@@ -247,7 +255,8 @@ class XLMRobertaModel(torch.nn.Module):
         self.total_batch_size = self.training_args.per_device_train_batch_size * self.accelerator.num_processes * self.training_args.gradient_accumulation_steps
     
     
-    def fit_batch(self, batch_data):
+    def fit_batch(self, batch_data, current_step=None):
+            
         with self.accelerator.accumulate(self.model):
             outputs = self.model(**batch_data)
             loss = outputs.loss
@@ -261,8 +270,10 @@ class XLMRobertaModel(torch.nn.Module):
 
             gathered_loss = self.accelerator.gather_for_metrics(loss.repeat(self.training_args.per_device_eval_batch_size))
             self.current_step += 1
+            if current_step is None:
+                current_step = self.current_step
             #current_step = epoch_len * self.epoch_global + i
-            self.writer.add_scalar("train_loss", gathered_loss.mean().item(), self.current_step)
+            self.writer.add_scalar("train_loss", gathered_loss.mean().item(), current_step)
             self.writer.flush()
 
     def train_for_epochs(self, epochs=None):
@@ -294,7 +305,7 @@ class XLMRobertaModel(torch.nn.Module):
                 #         accelerator.save_state(output_dir)
 
 
-    def local_valid(self):
+    def local_valid(self, current_step=None):
         self.model.eval()
         losses = []
         
@@ -306,11 +317,13 @@ class XLMRobertaModel(torch.nn.Module):
             losses.append(self.accelerator.gather_for_metrics(loss.repeat(self.training_args.per_device_eval_batch_size)))
 
         losses = torch.cat(losses)
+        if current_step is None:
+            current_step = self.current_step
         try:
             eval_loss = torch.mean(losses)
-            self.writer.add_scalar('dev_loss', eval_loss.item(), self.current_step)
+            self.writer.add_scalar('dev_loss', eval_loss.item(), current_step)
             perplexity = math.exp(eval_loss)
-            self.writer.add_scalar('perplexity', perplexity, self.current_step)
+            self.writer.add_scalar('perplexity', perplexity, current_step)
         except OverflowError:
             perplexity = float("inf")
         

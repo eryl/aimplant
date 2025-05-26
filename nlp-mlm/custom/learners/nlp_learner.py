@@ -60,8 +60,6 @@ class NLPLearner(Learner):
         data_path: str,
         model_path: str,
         config_path: str,
-        learning_rate: float = 1e-5,
-        batch_size: int = 32,
         train_task_name: str = AppConstants.TASK_TRAIN,
     ):
         """Supervised NLP task Learner.
@@ -163,7 +161,10 @@ class NLPLearner(Learner):
         epoch_len = len(self.model.train_dataloader)
         self.log_info(fl_ctx, f"Local steps per epoch: {epoch_len}")
 
+        processed_epochs = current_round*self.model.aggregation_epochs
+        
         for epoch in range(self.model.aggregation_epochs):
+            steps_to_this_epoch = processed_epochs + epoch*epoch_len
             if abort_signal.triggered:
                 return make_reply(ReturnCode.TASK_ABORTED)
                 
@@ -178,7 +179,8 @@ class NLPLearner(Learner):
             for i, batch_data in enumerate(self.model.train_dataloader):
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
-                self.model.fit_batch(batch_data)
+                current_step = steps_to_this_epoch + i
+                self.model.fit_batch(batch_data, current_step)
         
         if abort_signal.triggered:
             return make_reply(ReturnCode.TASK_ABORTED)
@@ -236,9 +238,14 @@ class NLPLearner(Learner):
 
         # before_train_validate only, can extend to other validate types
         validate_type = shareable.get_header(AppConstants.VALIDATE_TYPE)
+        
+        current_round = shareable.get_header(AppConstants.CURRENT_ROUND)
+        processed_epochs = current_round*self.model.aggregation_epochs
+        current_step = len(self.model.train_dataloader)*processed_epochs
+        
         if validate_type == ValidateType.BEFORE_TRAIN_VALIDATE:
             # perform valid before local train
-            global_metric = self.model.local_valid()
+            global_metric = self.model.local_valid(current_step)
             
             if abort_signal.triggered:
                 return make_reply(ReturnCode.TASK_ABORTED)
