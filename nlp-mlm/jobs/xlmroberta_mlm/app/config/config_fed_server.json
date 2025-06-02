@@ -10,7 +10,7 @@
   "components": [
     {
       "id": "persistor",
-      "path": "nvflare.app_opt.pt.file_model_persistor.PTFileModelPersistor",
+      "path": "custom.epoch_persistor.EveryEpochPersistor",
       "args": {
         "model": {
           "path": "custom.models.nlp_models.XLMRobertaModel",
