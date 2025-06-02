@@ -29,9 +29,7 @@
       "id": "nlp-learner",
       "path": "custom.learners.nlp_learner.NLPLearner",
       "args": {
-        "data_path": "/home/ubuntu/src/aimplant/fedhealth_mlm_data",
-        "model_path": "/home/ubuntu/src/aimplant/nlp-mlm/models/xlm-roberta",
-        "config_path": "/home/ubuntu/src/aimplant/nlp-mlm/configs/cco-dsv.json"
+        "config_name": "cco-dsv.json"
       }
     }
   ]

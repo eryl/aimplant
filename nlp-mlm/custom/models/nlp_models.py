@@ -51,14 +51,24 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 class XLMRobertaModel(torch.nn.Module):
-    def __init__(self, model_path, config_path):
+    def __init__(self, config_name, model_dir_env: str = "FH_MODEL_DIR",):
         # Keep in mind that this initializer will run both on
         # the server and the clients. We should not do things
         # dependent on the client training here (such as
         # setting up dataloaders), instead do that in initialize()
         
         super(XLMRobertaModel, self).__init__()
-        self.model_name = model_path
+        
+        self.model_dir_env = model_dir_env        
+        if self.model_dir_env in os.environ:
+            self.model_path = os.environ[self.model_dir_env]
+        else:
+            raise RuntimeError(f"Environmental variable '{self.model_dir_env}' not set, no model path")
+        
+        self.config_name = config_name
+        self.config_path = Path(__file__).parent.parent.parent / 'configs' / self.config_name
+        
+        self.model_name = self.model_path
         self.base_model = AutoModelForMaskedLM.from_pretrained(
             self.model_name#, output_attentions=False, output_hidden_states=False
         )
@@ -71,8 +81,7 @@ class XLMRobertaModel(torch.nn.Module):
         
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         
-        self.config_path = config_path
-        self.config = get_config(config_path)
+        self.config = get_config(self.config_path)
         self.training_args = self.config.training_args
         self.peft_config = self.config.lora_config
         # Test whether LoRA is causing the issues

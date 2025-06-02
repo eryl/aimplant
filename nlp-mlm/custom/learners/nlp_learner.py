@@ -53,39 +53,20 @@ from accelerate import Accelerator, DistributedType
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+TRAIN_DATA_ENV = "FH_TRAINING_DATA"
+DEV_DATA_ENV = "FH_DEV_DATA"
+TEST_DATA_ENV = "FH_TEST_DATA"
 
 class NLPLearner(Learner):
     def __init__(
         self,
-        data_path: str,
-        model_path: str,
-        config_path: str,
+        #data_path: str,
+        config_name: str,
         train_task_name: str = AppConstants.TASK_TRAIN,
     ):
-        """Supervised NLP task Learner.
-            This provides the basic functionality of a local learner for NLP models: perform before-train
-            validation on global model at the beginning of each round, perform local training,
-            and send the updated weights. No model will be saved locally, tensorboard record for
-            local loss and global model validation score.
-
-        Args:
-            data_path: path to dataset,
-            learning_rate,
-            batch_size,
-            model_name: the model name to be used in the pipeline
-            num_labels: num_labels for the model,
-            ignore_token: the value for representing padding / null token
-            aggregation_epochs: the number of training epochs for a round. Defaults to 1.
-            train_task_name: name of the task to train the model.
-
-        Returns:
-            a Shareable with the updated local model after running `execute()`
-        """
         super().__init__()
         self.train_task_name = train_task_name
-        self.model_path = model_path
-        self.data_path = data_path
-        self.config_path = config_path
+        self.config_name = config_name
         # client ID
         self.client_id = None
         # Epoch counter
@@ -108,12 +89,28 @@ class NLPLearner(Learner):
             f"Client {self.client_id} initialized with args: \n {fl_args}",
         )
         
-        self.model = XLMRobertaModel(self.model_path, self.config_path)
+        self.model = XLMRobertaModel(self.config_name)
+            
         
-        train_dataset_path = os.path.join(self.data_path, self.client_id + "_train.txt")
-        dev_dataset_path = os.path.join(self.data_path, self.client_id + "_dev.txt")
-        test_dataset_path = os.path.join(self.data_path, self.client_id + "_test.txt")
-        self.model.initialize(app_dir, train_dataset_path, dev_dataset_path, test_dataset_path)
+        if TRAIN_DATA_ENV in os.environ:
+            self.training_data_path = os.environ[TRAIN_DATA_ENV]
+        else:
+            raise RuntimeError(f"Environmental variable '{TRAIN_DATA_ENV}' not set, no training data path")
+        if DEV_DATA_ENV in os.environ:
+            self.dev_data_path = os.environ[DEV_DATA_ENV]
+        else:
+            raise RuntimeError(f"Environmental variable '{DEV_DATA_ENV}' not set, no dev data path")
+        
+        if TEST_DATA_ENV in os.environ:
+            self.test_data_path = os.environ[TEST_DATA_ENV]
+        else:
+            raise RuntimeError(f"Environmental variable '{TEST_DATA_ENV}' not set, no test data path")
+        
+
+        #train_dataset_path = os.path.join(self.data_path, self.client_id + "_train.txt")
+        #dev_dataset_path = os.path.join(self.data_path, self.client_id + "_dev.txt")
+        #test_dataset_path = os.path.join(self.data_path, self.client_id + "_test.txt")
+        self.model.initialize(app_dir, self.training_data_path, self.dev_data_path, self.test_data_path)
         
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
