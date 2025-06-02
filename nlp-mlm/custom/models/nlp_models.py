@@ -84,10 +84,10 @@ class XLMRobertaModel(torch.nn.Module):
         self.config = get_config(self.config_path)
         self.training_args = self.config.training_args
         self.peft_config = self.config.lora_config
-        # Test whether LoRA is causing the issues
-        #self.model = get_peft_model(self.base_model, self.peft_config)
+        # Set up LoRA
+        self.model = get_peft_model(self.base_model, self.peft_config)
         #self.model.print_trainable_parameters()
-        self.model = self.base_model
+        #self.model = self.base_model
         self.current_step = 0
         self.aggregation_epochs = self.training_args.aggregation_epochs
         
