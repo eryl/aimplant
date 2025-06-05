@@ -16,6 +16,10 @@ $ source fh-mlm-env/bin/activate
 (fh-mlm-env)$ python -m pip install -r requirements.txt
 ```
 
+### XLM-RoBERTa
+
+You will also need the model [from huggingface](https://huggingface.co/FacebookAI/xlm-roberta-base). If you're computer has access to the internet you can just run the `download_model.py` script.
+
 ## Dataset
 
 The datasets are expected to be regular text files (UTF-8 encoded) with the training examples. In the aiMPLANT demonstrator, the files is organized with one line per patient, with the clinical notes for each patient concatenated sequentially according to date of the note. Do note that sequences of text will follow new-lines, so the context window for MLM will not include text spanning multiple lines. 
