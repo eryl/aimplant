@@ -96,10 +96,10 @@ def main():
         perplexity = model.local_valid()
         
         if perplexity < best_perplexity:
-            best_model_path = os.join(args.app_dir / f"best_model_epoch-{epoch+1}.pt")
+            best_model_path = workspace_dir / f"best_model_epoch-{epoch+1}.pt"
             torch.save(model.state_dict(), best_model_path)
             
-        latest_model_path = os.join(args.app_dir / f"latest_model_epoch-{epoch+1}.pt")
+        latest_model_path = workspace_dir / f"latest_model_epoch-{epoch+1}.pt"
         torch.save(model.state_dict(), latest_model_path)
                 
             
