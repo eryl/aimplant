@@ -34,7 +34,7 @@
                     "FH_TEST_DATA": "/home/ubuntu/src/aimplant/fedhealth_mlm_data/site-1_test.txt",
                  }, 
             },
-        },
+        
         {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
