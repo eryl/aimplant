@@ -3,25 +3,43 @@ from pathlib import Path
 import json
 import os.path
 import shutil
+import socket
+
 
 import torch
 from tqdm import trange, tqdm
+
+import sys
+
+
+APP_PATH = Path('apps')/ 'xlmroberta_mlm'
+TRAIN_DATA_ENV = "FH_TRAINING_DATA"
+DEV_DATA_ENV = "FH_DEV_DATA"
+TEST_DATA_ENV = "FH_TEST_DATA"
 
 from custom.nlp_models import XLMRobertaModel
 
 def main():
     parser = argparse.ArgumentParser(description="Train the local version of the XLMRoberta model for federated health")
     #parser.add_argument('model_path', help="Directory to read the model from", type=Path)
-    parser.add_argument('nvflare_config_dir', help="Directory to read configurations from. This should contain the config_fed_server.json and config_fed_client.json used for training the federated model which we use to pick up number of rounds etc.", type=Path)
-    parser.add_argument('data_prefix', help="The prefix used to construct the dataset paths. Often something like 'site-1' or 'site-2'")
-    parser.add_argument('--app-dir', help="Directory to save training output to", type=Path, default=Path("local_training"))
+    parser.add_argument('--app-dir', 
+                        help="Directory where the NVFLARE app resides.", 
+                        type=Path,
+                        default=APP_PATH)
+    parser.add_argument('--site', 
+                        help="The identifier for the site, will mainly be used for organizing output.", 
+                        default=socket.gethostname())
+    parser.add_argument('--workspace-dir', 
+                        help="Directory to save training output to", 
+                        type=Path, 
+                        default=Path("local_training"))
     
     args = parser.parse_args()
-    app_dir = args.app_dir / args.data_prefix
-    app_dir.mkdir(exists_ok=True, parents=True)
+    workspace_dir = args.workspace_dir / args.site
+    workspace_dir.mkdir(exist_ok=True, parents=True)
     
-    server_config_path = args.nvflare_config_dir / "config_fed_server.json"
-    client_config_path = args.nvflare_config_dir / "config_fed_client.json"
+    server_config_path = args.app_dir / 'config' / 'config_fed_server.json'
+    client_config_path = args.app_dir / 'config' / 'config_fed_client.json'
     
     # Extract server arguments
     with open(server_config_path) as fp:
@@ -32,33 +50,41 @@ def main():
     with open(client_config_path) as fp:
         client_fed_config = json.load(fp)
     
-    model_path = None
-    config_path = None
-    data_path = None
+    config_name = None
     
     # This is hardcoded to work with the jobs definition we have made.
     for component in client_fed_config["components"]:
-        if component["path"] == "custom.learners.nlp_learner.NLPLearner":
-            data_path = component["args"]["data_path"]
-            model_path = component["args"]["model_path"]
-            config_path = component["args"]["config_path"]
+        if component["path"] == "custom.nlp_learner.NLPLearner":
+            config_name = component["args"]["config_name"]
             
-    if model_path is None:
+    if config_name is None:
         raise RuntimeError(f"Could not find a model config path in {args.config_path}. Does it have a PTFileModelPersistor component?")
     
-    model = XLMRobertaModel(model_path, config_path)
+    model = XLMRobertaModel(config_name)
     
-    train_dataset_path = os.path.join(data_path, f"{args.data_prefix}_train.txt")
-    dev_dataset_path = os.path.join(data_path, f"{args.data_prefix}_dev.txt")
-    test_dataset_path = os.path.join(data_path, f"{args.data_prefix}_test.txt")
-    model.initialize(app_dir, train_dataset_path, dev_dataset_path, test_dataset_path)
+    
+    if TRAIN_DATA_ENV in os.environ:
+        training_data_path = os.environ[TRAIN_DATA_ENV]
+    else:
+        raise RuntimeError(f"Environmental variable '{TRAIN_DATA_ENV}' not set, no training data path")
+    if DEV_DATA_ENV in os.environ:
+        dev_data_path = os.environ[DEV_DATA_ENV]
+    else:
+        raise RuntimeError(f"Environmental variable '{DEV_DATA_ENV}' not set, no dev data path")
+    
+    if TEST_DATA_ENV in os.environ:
+        test_data_path = os.environ[TEST_DATA_ENV]
+    else:
+        raise RuntimeError(f"Environmental variable '{TEST_DATA_ENV}' not set, no test data path")
+    
+    model.initialize(workspace_dir, training_data_path, dev_data_path, test_data_path)
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
     
     best_perplexity = float("inf")
     best_model_path = None
-    latest_model_path = app_dir / "latest_model_epoch0.pt"
+    latest_model_path = workspace_dir / "latest_model_epoch0.pt"
     torch.save(model.state_dict(), latest_model_path)
     
     for epoch in trange(max_epochs, desc="Epoch"):
