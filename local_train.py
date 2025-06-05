@@ -7,7 +7,7 @@ import shutil
 import torch
 from tqdm import trange, tqdm
 
-from custom.models.nlp_models import XLMRobertaModel
+from custom.nlp_models import XLMRobertaModel
 
 def main():
     parser = argparse.ArgumentParser(description="Train the local version of the XLMRoberta model for federated health")
@@ -17,6 +17,8 @@ def main():
     parser.add_argument('--app-dir', help="Directory to save training output to", type=Path, default=Path("local_training"))
     
     args = parser.parse_args()
+    app_dir = args.app_dir / args.data_prefix
+    app_dir.mkdir(exists_ok=True, parents=True)
     
     server_config_path = args.nvflare_config_dir / "config_fed_server.json"
     client_config_path = args.nvflare_config_dir / "config_fed_client.json"
@@ -49,14 +51,15 @@ def main():
     train_dataset_path = os.path.join(data_path, f"{args.data_prefix}_train.txt")
     dev_dataset_path = os.path.join(data_path, f"{args.data_prefix}_dev.txt")
     test_dataset_path = os.path.join(data_path, f"{args.data_prefix}_test.txt")
-    model.initialize(args.app_dir, train_dataset_path, dev_dataset_path, test_dataset_path)
+    model.initialize(app_dir, train_dataset_path, dev_dataset_path, test_dataset_path)
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
     
-    best_perplexity = model.local_valid()
+    best_perplexity = float("inf")
     best_model_path = None
-    latest_model_path = None
+    latest_model_path = app_dir / "latest_model_epoch0.pt"
+    torch.save(model.state_dict(), latest_model_path)
     
     for epoch in trange(max_epochs, desc="Epoch"):
         model.train()
@@ -67,14 +70,11 @@ def main():
         perplexity = model.local_valid()
         
         if perplexity < best_perplexity:
-            if best_model_path is not None:
-                os.unlink(best_model_path)
-                best_model_path = os.join(args.app_dir / f"best_model_epoch-{epoch+1}.pt")
-                torch.save(model.state_dict(), best_model_path)
-            if latest_model_path is not None:
-                os.unlink(latest_model_path)
-                latest_model_path = os.join(args.app_dir / f"latest_model_epoch-{epoch+1}.pt")
-                torch.save(model.state_dict(), latest_model_path)
+            best_model_path = os.join(args.app_dir / f"best_model_epoch-{epoch+1}.pt")
+            torch.save(model.state_dict(), best_model_path)
+            
+        latest_model_path = os.join(args.app_dir / f"latest_model_epoch-{epoch+1}.pt")
+        torch.save(model.state_dict(), latest_model_path)
                 
             
     
