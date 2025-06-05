@@ -27,8 +27,13 @@
             "program": "local_train.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "env": {"PYTHONPATH": "/home/ubuntu/src/aimplant/apps/xlmroberta_mlm" },
-            "args": ["apps/xlmroberta_mlm/app/config/", "site-1"]
+            "env": {"PYTHONPATH": "/home/ubuntu/src/aimplant/apps/xlmroberta_mlm", 
+                    "FH_MODEL_DIR": "/home/ubuntu/src/aimplant/nlp-mlm/models/xlm-roberta", 
+                    "FH_TRAINING_DATA": "/home/ubuntu/src/aimplant/fedhealth_mlm_data/site-1_train.txt",
+                    "FH_DEV_DATA": "/home/ubuntu/src/aimplant/fedhealth_mlm_data/site-1_dev.txt",
+                    "FH_TEST_DATA": "/home/ubuntu/src/aimplant/fedhealth_mlm_data/site-1_test.txt",
+                 }, 
+            },
         },
         {
             "name": "Python Debugger: Current File",
