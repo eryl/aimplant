@@ -1,0 +1,41 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    
+    "configurations": [
+        {
+            "name": "Python Debugger: nvflare",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "/home/ubuntu/miniforge3/envs/xlmroberta/bin/nvflare",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {"PYTHONPATH": "/home/ubuntu/src/aimplant/apps/xlmroberta_mlm", 
+                    "FH_MODEL_DIR": "/home/ubuntu/src/aimplant/nlp-mlm/models/xlm-roberta", 
+                    "FH_TRAINING_DATA": "/home/ubuntu/src/aimplant/fedhealth_mlm_data/site-1_train.txt",
+                    "FH_DEV_DATA": "/home/ubuntu/src/aimplant/fedhealth_mlm_data/site-1_dev.txt",
+                    "FH_TEST_DATA": "/home/ubuntu/src/aimplant/fedhealth_mlm_data/site-1_test.txt",
+                 },
+            "args": ["simulator", "apps/xlmroberta_mlm", "-w", "/tmp/nvflare/workspaces/xlmroberta-mlm", "-n 2", "-t", "1", "-gpu", "0"]
+        },
+        {
+            "name": "Python Debugger: local train",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "local_train.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {"PYTHONPATH": "/home/ubuntu/src/aimplant/apps/xlmroberta_mlm" },
+            "args": ["apps/xlmroberta_mlm/app/config/", "site-1"]
+        },
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        }
+    ]
+}

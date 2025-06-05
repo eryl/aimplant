@@ -21,7 +21,7 @@ from typing import Optional, Literal, Union
 
 import numpy as np
 import torch
-from custom.models.nlp_models import XLMRobertaModel
+from custom.nlp_models import XLMRobertaModel
 
 from torch.optim import AdamW
 from torch.utils.data import DataLoader

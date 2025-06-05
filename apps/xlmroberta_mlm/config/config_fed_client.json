@@ -27,7 +27,7 @@
   "components": [
     {
       "id": "nlp-learner",
-      "path": "custom.learners.nlp_learner.NLPLearner",
+      "path": "custom.nlp_learner.NLPLearner",
       "args": {
         "config_name": "cco-dsv.json"
       }

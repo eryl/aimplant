@@ -66,7 +66,7 @@ class XLMRobertaModel(torch.nn.Module):
             raise RuntimeError(f"Environmental variable '{self.model_dir_env}' not set, no model path")
         
         self.config_name = config_name
-        self.config_path = Path(__file__).parent.parent.parent / 'configs' / self.config_name
+        self.config_path = Path(__file__).parent.parent / 'resources' / self.config_name
         
         self.model_name = self.model_path
         self.base_model = AutoModelForMaskedLM.from_pretrained(

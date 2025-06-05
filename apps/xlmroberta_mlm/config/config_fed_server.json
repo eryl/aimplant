@@ -13,7 +13,7 @@
       "path": "custom.epoch_persistor.EveryEpochPersistor",
       "args": {
         "model": {
-          "path": "custom.models.nlp_models.XLMRobertaModel",
+          "path": "custom.nlp_models.XLMRobertaModel",
           "args": {
             "config_name": "cco-dsv.json"
           }
