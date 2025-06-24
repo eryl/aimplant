@@ -52,3 +52,29 @@ export FH_TEST_DATA=$PWD/fedhealth_mlm_data/site-1_test.txt
 python local_train.py
 ```
 
+## Dockerized run
+
+You can instead run the client using docker. The `build/Dockerfile` containts the build recipie. The build definition assumes there are certain files needed to be copied into the container. You need to download the XLM-RoBERTa model and place it in `models/xlm-roberta`.
+
+Use the following to build the container:
+
+```
+$ cd build
+$ docker build -t fedhealth .
+```
+
+To run the image, you need to mount in certain directories (path is inside container, the mount target):
+ - `/app/data` - this directory should contain three text files, `training_data.txt`, `dev_data.txt` and `test_data.txt`.
+ - `/app/client_kit` - this directory should contain your nvidia flare client directory, i.e. your credentials and the startup script.
+ - `/app/workspace` - this is where all persistent data from the run will be saved (is this needed, if it's stored under client_kit that's probably for the best)
+
+ To run the container, use the following command (replace the `/path/to/your/[...]` with the appropriate path):
+
+ ```
+ docker run --gpus all -it \
+    -v /path/to/your/dataset:/app/data \
+    -v /path/to/your/client_kit:/app/client_kit \
+    fedhealth bash
+ ```
+
+This (running with `bash` as an argument) will start a shell inside the container which you can experiment with. There are two other entrypoints available: `simulator` and `client`. These are shortcuts to either start a simulated run inside the container (to test that things work) or to start in NVFLARE client mode, i.e. connect your computer to the federated network.
