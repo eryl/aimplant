@@ -78,3 +78,9 @@ To run the image, you need to mount in certain directories (path is inside conta
  ```
 
 This (running with `bash` as an argument) will start a shell inside the container which you can experiment with. There are two other entrypoints available: `simulator` and `client`. These are shortcuts to either start a simulated run inside the container (to test that things work) or to start in NVFLARE client mode, i.e. connect your computer to the federated network.
+
+To run the simulator, you can for example run:
+
+```
+$ docker run --gpus all -it -v ./fedhealth_mlm_data:/app/data fedhealth simulate
+```

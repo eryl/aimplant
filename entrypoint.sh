@@ -4,7 +4,7 @@ case "$1" in
   simulate)
     echo "Starting FLARE simulator..."
     shift
-    nvflare simulator "${@}"
+    nvflare simulator /app/apps/xlmroberta_mlm -w /app/workspace/xlmroberta-mlm -n 2 -t 1 -gpu 0
     ;;
   client)
     echo "Starting FLARE client..."
