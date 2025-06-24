@@ -117,7 +117,10 @@ class XLMRobertaModel(torch.nn.Module):
         #dev_dataset = load_dataset(dev_dataset_path)
         data_files = {'train': train_dataset_path, 'dev': dev_dataset_path, 'test': test_dataset_path}
         extension = 'text'
-        dataset = load_dataset(extension, data_files=data_files)
+        
+        # Don't cache things in the default place, assume there is space in the dataset directory
+        cache_dir = os.path.join(os.path.dirname(train_dataset_path), "hf_cache")
+        dataset = load_dataset(extension, data_files=data_files, cache_dir=cache_dir)
         return dataset
     
     def initialize(self, app_dir, train_dataset_path, dev_dataset_path, test_dataset_path):
