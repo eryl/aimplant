@@ -1,5 +1,3 @@
---index-url https://download.pytorch.org/whl/cu118
-torch
 nvflare==2.4
 transformers
 datasets
