@@ -41,6 +41,12 @@ Apart from this, during local training and simulation you might need to add the 
 $ export PYTHONPATH=$PWD/apps/xlmroberta_mlm:$PYTHONPATH  # Assuming that $PWD is the project root, this adds the app directory so that the custom code can be found
 ```
 
+### Configure local batch size
+Due to differences in compute capacity, you might want to override the device batch size (number of samples which gradients are computed on at a time). Two environmental variables control this and overrides the setting in the training configuration:
+
+ - `FH_TRAIN_BATCH_SIZE` - size of batches of training samples. The number of gradient accumulation steps will automatically be set so that the effective batch size for optimization remains the same
+ - `FH_EVAL_BATCH_SIZE`- size of batches for evaluation
+
 
 ## Example with sample data
 ```shell

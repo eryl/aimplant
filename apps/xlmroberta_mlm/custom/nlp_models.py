@@ -131,9 +131,12 @@ class XLMRobertaModel(torch.nn.Module):
         
         with open(os.path.join(app_dir, "trace.txt"), 'a') as fp:
             timestamp = datetime.datetime.now()
-            fp.write(f"{timestamp}\n")
+            fp.write(f"XLMRobertaModel.initialize: {timestamp}\n")
         
-        self.accelerator = Accelerator(gradient_accumulation_steps=self.training_args.gradient_accumulation_steps, **accelerator_log_kwargs)
+        training_batch_size = os.environ.get("FH_TRAIN_BATCH_SIZE", self.training_args.per_device_train_batch_size)
+        eval_batch_size = os.environ.get("FH_EVAL_BATCH_SIZE", self.training_args.per_device_eval_batch_size)
+        gradient_accumulation_steps = self.training_args.optimization_batch_size // training_batch_size
+        self.accelerator = Accelerator(gradient_accumulation_steps=gradient_accumulation_steps, **accelerator_log_kwargs)
 
         # set local tensorboard writer for local validation score of global model
         self.writer = SummaryWriter(app_dir)
@@ -193,9 +196,10 @@ class XLMRobertaModel(torch.nn.Module):
         # TODO: Set the MLM probability and batch sizes as client arguments
         data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm_probability=self.training_args.mlm_probability)
 
+
         # DataLoaders creation:
-        train_dataloader = DataLoader(train_dataset, shuffle=True, collate_fn=data_collator, batch_size=self.training_args.per_device_train_batch_size)
-        eval_dataloader = DataLoader(eval_dataset, collate_fn=data_collator, batch_size=self.training_args.per_device_eval_batch_size)
+        train_dataloader = DataLoader(train_dataset, shuffle=True, collate_fn=data_collator, batch_size=training_batch_size)
+        eval_dataloader = DataLoader(eval_dataset, collate_fn=data_collator, batch_size=eval_batch_size)
 
         # Optimizer
         # Split weights in two groups, one with weight decay and the other not.
@@ -219,7 +223,7 @@ class XLMRobertaModel(torch.nn.Module):
 
         # Scheduler and math around the number of training steps.
         overrode_max_train_steps = False
-        num_update_steps_per_epoch = math.ceil(len(train_dataloader) / self.training_args.gradient_accumulation_steps)
+        num_update_steps_per_epoch = math.ceil(len(train_dataloader) / gradient_accumulation_steps)
         
         if self.training_args.max_train_steps is None:
             self.training_args.max_train_steps = self.training_args.num_train_epochs * num_update_steps_per_epoch
@@ -244,7 +248,7 @@ class XLMRobertaModel(torch.nn.Module):
         #     self.model.tie_weights()
 
         # We need to recalculate our total training steps as the size of the training dataloader may have changed.
-        num_update_steps_per_epoch = math.ceil(len(self.train_dataloader) / self.training_args.gradient_accumulation_steps)
+        num_update_steps_per_epoch = math.ceil(len(self.train_dataloader) / gradient_accumulation_steps)
         if overrode_max_train_steps:
             self.training_args.max_train_steps = self.training_args.num_train_epochs * num_update_steps_per_epoch
         # Afterwards we recalculate our number of training epochs
@@ -264,7 +268,7 @@ class XLMRobertaModel(torch.nn.Module):
         #     experiment_config["lr_scheduler_type"] = experiment_config["lr_scheduler_type"].value
         #     accelerator.init_trackers("mlm_no_trainer", experiment_config)
 
-        self.total_batch_size = self.training_args.per_device_train_batch_size * self.accelerator.num_processes * self.training_args.gradient_accumulation_steps
+        self.total_batch_size = self.training_args.per_device_train_batch_size * self.accelerator.num_processes * gradient_accumulation_steps
     
     
     def fit_batch(self, batch_data, current_step=None):
