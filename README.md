@@ -7,6 +7,7 @@ As example datasets, the code uses works of Jane Austen and Shakespeare.
 
 ## Installation
 
+### with `pip`
 Use `pip` to install the dependencies:
 
 ```shell
