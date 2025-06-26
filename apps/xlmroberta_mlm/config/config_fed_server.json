@@ -34,7 +34,8 @@
       "id": "model_selector",
       "path": "nvflare.app_common.widgets.intime_model_selector.IntimeModelSelector",
       "args": {
-        "weigh_by_local_iter": true
+        "weigh_by_local_iter": true,
+        "negate_key_metric": true
       }
     }
   ],
