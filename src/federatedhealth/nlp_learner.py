@@ -21,7 +21,8 @@ from typing import Optional, Literal, Union
 
 import numpy as np
 import torch
-from custom.nlp_models import XLMRobertaModel
+from federatedhealth.nlp_models import XLMRobertaModel
+from federatedhealth.config import load_config
 
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
@@ -53,20 +54,14 @@ from accelerate import Accelerator, DistributedType
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-TRAIN_DATA_ENV = "FH_TRAINING_DATA"
-DEV_DATA_ENV = "FH_DEV_DATA"
-TEST_DATA_ENV = "FH_TEST_DATA"
-
 class NLPLearner(Learner):
     def __init__(
         self,
         #data_path: str,
-        config_name: str,
         train_task_name: str = AppConstants.TASK_TRAIN,
     ):
         super().__init__()
         self.train_task_name = train_task_name
-        self.config_name = config_name
         # client ID
         self.client_id = None
         # Epoch counter
@@ -89,24 +84,14 @@ class NLPLearner(Learner):
             f"Client {self.client_id} initialized with args: \n {fl_args}",
         )
         
-        self.model = XLMRobertaModel(self.config_name)
-            
+        self.model = XLMRobertaModel()
+        self.config = load_config()
+        data_config = self.config.data_config
         
-        if TRAIN_DATA_ENV in os.environ:
-            self.training_data_path = os.environ[TRAIN_DATA_ENV]
-        else:
-            raise RuntimeError(f"Environmental variable '{TRAIN_DATA_ENV}' not set, no training data path")
-        if DEV_DATA_ENV in os.environ:
-            self.dev_data_path = os.environ[DEV_DATA_ENV]
-        else:
-            raise RuntimeError(f"Environmental variable '{DEV_DATA_ENV}' not set, no dev data path")
+        self.training_data_path = data_config.training_data
+        self.dev_data_path = data_config.dev_data
+        self.test_data_path = data_config.test_data
         
-        if TEST_DATA_ENV in os.environ:
-            self.test_data_path = os.environ[TEST_DATA_ENV]
-        else:
-            raise RuntimeError(f"Environmental variable '{TEST_DATA_ENV}' not set, no test data path")
-        
-
         #train_dataset_path = os.path.join(self.data_path, self.client_id + "_train.txt")
         #dev_dataset_path = os.path.join(self.data_path, self.client_id + "_dev.txt")
         #test_dataset_path = os.path.join(self.data_path, self.client_id + "_test.txt")

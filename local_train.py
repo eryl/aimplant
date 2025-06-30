@@ -13,11 +13,9 @@ import sys
 
 
 APP_PATH = Path('apps')/ 'xlmroberta_mlm'
-TRAIN_DATA_ENV = "FH_TRAINING_DATA"
-DEV_DATA_ENV = "FH_DEV_DATA"
-TEST_DATA_ENV = "FH_TEST_DATA"
 
-from custom.nlp_models import XLMRobertaModel
+from federatedhealth.nlp_models import XLMRobertaModel
+from federatedhealth.config import load_config
 
 def main():
     parser = argparse.ArgumentParser(description="Train the local version of the XLMRoberta model for federated health")
@@ -50,32 +48,12 @@ def main():
     with open(client_config_path) as fp:
         client_fed_config = json.load(fp)
     
-    config_name = None
+    model = XLMRobertaModel()
     
-    # This is hardcoded to work with the jobs definition we have made.
-    for component in client_fed_config["components"]:
-        if component["path"] == "custom.nlp_learner.NLPLearner":
-            config_name = component["args"]["config_name"]
-            
-    if config_name is None:
-        raise RuntimeError(f"Could not find a model config path in {args.config_path}. Does it have a PTFileModelPersistor component?")
-    
-    model = XLMRobertaModel(config_name)
-    
-    
-    if TRAIN_DATA_ENV in os.environ:
-        training_data_path = os.environ[TRAIN_DATA_ENV]
-    else:
-        raise RuntimeError(f"Environmental variable '{TRAIN_DATA_ENV}' not set, no training data path")
-    if DEV_DATA_ENV in os.environ:
-        dev_data_path = os.environ[DEV_DATA_ENV]
-    else:
-        raise RuntimeError(f"Environmental variable '{DEV_DATA_ENV}' not set, no dev data path")
-    
-    if TEST_DATA_ENV in os.environ:
-        test_data_path = os.environ[TEST_DATA_ENV]
-    else:
-        raise RuntimeError(f"Environmental variable '{TEST_DATA_ENV}' not set, no test data path")
+    config = load_config()
+    training_data_path = config.data_config.training_data
+    dev_data_path = config.data_config.dev_data
+    test_data_path = config.data_config.test_data
     
     model.initialize(workspace_dir, training_data_path, dev_data_path, test_data_path)
     

@@ -29,7 +29,7 @@ from torch.utils.tensorboard import SummaryWriter
 from transformers import AutoTokenizer, AutoModelForMaskedLM
 from peft import LoraConfig, TaskType, get_peft_model
 
-from custom.config import TrainingArgs, get_config
+from federatedhealth.config import TrainingArgs, load_config
 
 from transformers import (
     CONFIG_MAPPING,
@@ -51,7 +51,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 class XLMRobertaModel(torch.nn.Module):
-    def __init__(self, config_name, model_dir_env: str = "FH_MODEL_DIR",):
+    def __init__(self):
         # Keep in mind that this initializer will run both on
         # the server and the clients. We should not do things
         # dependent on the client training here (such as
@@ -59,16 +59,9 @@ class XLMRobertaModel(torch.nn.Module):
         
         super(XLMRobertaModel, self).__init__()
         
-        self.model_dir_env = model_dir_env        
-        if self.model_dir_env in os.environ:
-            self.model_path = os.environ[self.model_dir_env]
-        else:
-            raise RuntimeError(f"Environmental variable '{self.model_dir_env}' not set, no model path")
-        
-        self.config_name = config_name
-        self.config_path = Path(__file__).parent.parent / 'resources' / self.config_name
-        
-        self.model_name = self.model_path
+        self.config = load_config()
+                
+        self.model_name = self.config.model_path
         self.base_model = AutoModelForMaskedLM.from_pretrained(
             self.model_name#, output_attentions=False, output_hidden_states=False
         )
@@ -81,7 +74,6 @@ class XLMRobertaModel(torch.nn.Module):
         
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         
-        self.config = get_config(self.config_path)
         self.training_args = self.config.training_args
         self.peft_config = self.config.lora_config
         # Set up LoRA
@@ -133,8 +125,12 @@ class XLMRobertaModel(torch.nn.Module):
             timestamp = datetime.datetime.now()
             fp.write(f"XLMRobertaModel.initialize: {timestamp}\n")
         
-        training_batch_size = os.environ.get("FH_TRAIN_BATCH_SIZE", self.training_args.per_device_train_batch_size)
-        eval_batch_size = os.environ.get("FH_EVAL_BATCH_SIZE", self.training_args.per_device_eval_batch_size)
+        #training_batch_size = os.environ.get("FH_TRAIN_BATCH_SIZE", self.training_args.per_device_train_batch_size)
+        #eval_batch_size = os.environ.get("FH_EVAL_BATCH_SIZE", self.training_args.per_device_eval_batch_size)
+        
+        training_batch_size = self.training_args.per_device_train_batch_size
+        eval_batch_size = self.training_args.per_device_eval_batch_size
+        
         gradient_accumulation_steps = self.training_args.optimization_batch_size // training_batch_size
         self.accelerator = Accelerator(gradient_accumulation_steps=gradient_accumulation_steps, **accelerator_log_kwargs)
 

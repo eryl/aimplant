@@ -1,0 +1,36 @@
+{
+  "format_version": 2,
+
+  "DATASET_ROOT": "fedhealth_dataset",
+
+  "executors": [
+    {
+      "tasks": [
+        "train",
+        "validate"
+      ],
+      "executor": {
+        "id": "Executor",
+        "path": "nvflare.app_common.executors.learner_executor.LearnerExecutor",
+        "args": {
+          "learner_id": "nlp-learner"
+        }
+      }
+    }
+  ],
+
+  "task_result_filters": [
+  ],
+  "task_data_filters": [
+  ],
+
+  "components": [
+    {
+      "id": "nlp-learner",
+      "path": "federatedhealth.nlp_learner.NLPLearner",
+      "args": {
+        
+      }
+    }
+  ]
+}

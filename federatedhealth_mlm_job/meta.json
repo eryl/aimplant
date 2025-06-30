@@ -1,0 +1,9 @@
+{
+  "name": "xlmroberta_mlm",
+  "resource_spec": {},
+  "deploy_map": {
+    "app": [
+      "@ALL"
+    ]
+  }
+}
