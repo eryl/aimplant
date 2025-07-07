@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source .venv/bin/activate
+
 case "$1" in
   simulate)
     echo "Starting FLARE simulator..."

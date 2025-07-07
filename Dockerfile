@@ -17,20 +17,22 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.cargo/bin:${PATH}"
-
+ENV PATH="/root/.local/bin:${PATH}"
 
 # Create a working directory
 WORKDIR /app/workspace
 
 COPY models/xlm-roberta /app/xlm-roberta
-COPY . /app/workspace
+COPY src /app/workspace/src
+COPY .python-version /app/workspace
+COPY pyproject.toml /app/workspace
+COPY local_train.py /app/workspace
 COPY federatedhealth_mlm_job /app/federatedhealth_mlm_job
-COPY entrypoint.sh /entrypoint.sh
-
-RUN chmod +x /entrypoint.sh
+COPY entrypoint.sh /app/workspace/entrypoint.sh
 
 RUN uv sync
-RUN uv pip install -e .
+RUN --mount=type=cache,target=/root/.cache uv pip install -e .
 
-ENTRYPOINT ["/entrypoint.sh"]
+RUN chmod +x /app/workspace/entrypoint.sh
+
+ENTRYPOINT ["/app/workspace/entrypoint.sh"]
