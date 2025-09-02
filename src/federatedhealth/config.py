@@ -36,7 +36,7 @@ class TrainingArgs:
     num_warmup_steps: int = 0
     checkpointing_steps: Optional[Union[Literal['epoch'], int]] = None
     aggregation_epochs: int = 1
-
+        
 @dataclass
 class DataConfig:
     training_data: str
@@ -70,18 +70,18 @@ def load_config() -> FHConfig:
         data_config = DataConfig(**data_config)
         model_path = config_dict['model_path']
         
-        all_exists = True
-        for path_attr in fields(data_config):
-            path = getattr(data_config, path_attr.name)
-            if not os.path.exists(path):
-                print(f"Path for data_config.{path_attr.name} ({path}) does not exist!")
-                all_exists = False
+        # all_exists = True
+        # for path_attr in fields(data_config):
+        #     path = getattr(data_config, path_attr.name)
+        #     if not os.path.exists(path):
+        #         print(f"Path for data_config.{path_attr.name} ({path}) does not exist!")
+        #         all_exists = False
         
-        if not all_exists:
-            raise RuntimeError(f"Dataset paths for config file {config_path} are incorrect.")
+        # if not all_exists:
+        #     raise RuntimeError(f"Dataset paths for config file {config_path} are incorrect.")
         
-        if not os.path.exists(model_path):
-            raise RuntimeError(f"Model path {model_path} from config file {config_path} does not exist.")
+        # if not os.path.exists(model_path):
+        #     raise RuntimeError(f"Model path {model_path} from config file {config_path} does not exist.")
         
         config = FHConfig(model_path=model_path, training_args=training_args,
                           lora_config=lora_config,
