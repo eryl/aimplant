@@ -19,6 +19,8 @@ from pathlib import Path
 from itertools import chain
 from typing import Optional, Literal, Union
 
+from tqdm import tqdm
+
 import numpy as np
 import torch
 from federatedhealth.nlp_models import XLMRobertaModel
@@ -158,7 +160,7 @@ class NLPLearner(Learner):
                 fl_ctx,
                 f"Local epoch {self.client_id}: {epoch + 1}/{self.model.aggregation_epochs}",
             )
-            for i, batch_data in enumerate(self.model.train_dataloader):
+            for i, batch_data in enumerate(tqdm(self.model.train_dataloader, desc="Training batch")):
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
                 current_step = steps_to_this_epoch + i

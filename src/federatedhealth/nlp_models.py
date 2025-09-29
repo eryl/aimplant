@@ -22,6 +22,8 @@ import time
 from typing import Optional, Literal, Union, TypeVar, Type
 import importlib
 
+from tqdm import tqdm
+
 import torch
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
@@ -321,7 +323,7 @@ class XLMRobertaModel(torch.nn.Module):
         self.model.eval()
         losses = []
         
-        for step, batch in enumerate(self.eval_dataloader):
+        for step, batch in enumerate(tqdm(self.eval_dataloader, desc="Dev batch")):
             with torch.no_grad():
                 outputs = self.model(**batch)
 
