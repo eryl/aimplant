@@ -36,6 +36,8 @@ class TrainingArgs:
     num_warmup_steps: int = 0
     checkpointing_steps: Optional[Union[Literal['epoch'], int]] = None
     aggregation_epochs: int = 1
+    num_train_workers: int = 16
+    num_eval_workers: int = 16
     train_samples: Optional[int] = None  # If given, training will only use this many samples
     eval_samples: Optional[int] = None  # If steps are given, evaluation will only use these many samples
 

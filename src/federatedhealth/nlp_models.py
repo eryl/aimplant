@@ -205,8 +205,8 @@ class XLMRobertaModel(torch.nn.Module):
         eval_samples = self.config.training_args.eval_samples
         eval_sampler = RandomSampler(eval_dataset, replacement=False, num_samples=eval_samples)
         # DataLoaders creation:
-        train_dataloader = DataLoader(train_dataset, sampler=train_sampler, collate_fn=data_collator, batch_size=training_batch_size)
-        eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, collate_fn=data_collator, batch_size=eval_batch_size)
+        train_dataloader = DataLoader(train_dataset, sampler=train_sampler, collate_fn=data_collator, batch_size=training_batch_size, num_workers=self.config.training_args.num_train_workers)
+        eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, collate_fn=data_collator, batch_size=eval_batch_size, num_workers=self.config.training_args.num_eval_workers)
 
         # Optimizer
         # Split weights in two groups, one with weight decay and the other not.
