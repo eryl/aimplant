@@ -148,7 +148,7 @@ class NLPLearner(Learner):
         processed_epochs = current_round*self.model.aggregation_epochs
         
         for epoch in range(self.model.aggregation_epochs):
-            steps_to_this_epoch = processed_epochs + epoch*epoch_len
+            steps_to_this_epoch = (processed_epochs + epoch)*epoch_len   # Since epoch counts from 0, this will be the number of steps up to the current epoch
             if abort_signal.triggered:
                 return make_reply(ReturnCode.TASK_ABORTED)
                 
