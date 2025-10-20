@@ -58,6 +58,10 @@ class XLMRobertaModel(torch.nn.Module):
         # the server and the clients. We should not do things
         # dependent on the client training here (such as
         # setting up dataloaders), instead do that in initialize()
+        # Also, keep in mind that FL training is stateless. 
+        # This object will be recreated (e.g. this code re-run) for 
+        # each new federated round, so you can not use any attribute 
+        # on self to store state between runs.
         
         super(XLMRobertaModel, self).__init__()
         
@@ -76,14 +80,13 @@ class XLMRobertaModel(torch.nn.Module):
         
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         
-        self.training_args = self.config.training_args
         self.peft_config = self.config.lora_config
         # Set up LoRA
         self.model = get_peft_model(self.base_model, self.peft_config)
         #self.model.print_trainable_parameters()
         #self.model = self.base_model
         self.current_step = 0
-        self.aggregation_epochs = self.training_args.aggregation_epochs
+        self.aggregation_epochs = self.config.training_args.aggregation_epochs
         
 
     def forward(self, *args, **kwargs):
@@ -117,23 +120,26 @@ class XLMRobertaModel(torch.nn.Module):
         dataset = load_dataset(extension, data_files=data_files, cache_dir=cache_dir)
         return dataset
     
-    def initialize(self, app_dir, train_dataset_path, dev_dataset_path, test_dataset_path):
+    def initialize(self, app_dir, train_dataset_path, dev_dataset_path, test_dataset_path, training_override=None):
         # Initialize the accelerator. We will let the accelerator handle device placement for us in this example.
         # If we're using tracking, we also need to initialize it here and it will by default pick up all supported trackers
         # in the environment
         accelerator_log_kwargs = {}
         
+        if training_override is not None:
+            self.config.training_args = training_override
+            
         with open(os.path.join(app_dir, "trace.txt"), 'a') as fp:
             timestamp = datetime.datetime.now()
             fp.write(f"XLMRobertaModel.initialize: {timestamp}\n")
         
-        #training_batch_size = os.environ.get("FH_TRAIN_BATCH_SIZE", self.training_args.per_device_train_batch_size)
-        #eval_batch_size = os.environ.get("FH_EVAL_BATCH_SIZE", self.training_args.per_device_eval_batch_size)
+        #training_batch_size = os.environ.get("FH_TRAIN_BATCH_SIZE", self.config.training_args.per_device_train_batch_size)
+        #eval_batch_size = os.environ.get("FH_EVAL_BATCH_SIZE", self.config.training_args.per_device_eval_batch_size)
         
-        training_batch_size = self.training_args.per_device_train_batch_size
-        eval_batch_size = self.training_args.per_device_eval_batch_size
+        training_batch_size = self.config.training_args.per_device_train_batch_size
+        eval_batch_size = self.config.training_args.per_device_eval_batch_size
         
-        gradient_accumulation_steps = self.training_args.optimization_batch_size // training_batch_size
+        gradient_accumulation_steps = self.config.training_args.optimization_batch_size // training_batch_size
         self.accelerator = Accelerator(gradient_accumulation_steps=gradient_accumulation_steps, **accelerator_log_kwargs)
 
         # set local tensorboard writer for local validation score of global model
@@ -204,7 +210,7 @@ class XLMRobertaModel(torch.nn.Module):
         include_params = ['lora', 'bias']
         no_decay = ["bias", "LayerNorm.weight"]
         no_decay_params = {"params": [], "weight_decay": 0.0}
-        decay_params = {"params": [], "weight_decay": self.training_args.weight_decay}
+        decay_params = {"params": [], "weight_decay": self.config.training_args.weight_decay}
         
         for n, p in self.model.named_parameters():
             if include_params is not None and any(incl in n for incl in include_params):
@@ -215,7 +221,7 @@ class XLMRobertaModel(torch.nn.Module):
                 
         optimizer_grouped_parameters = [no_decay_params, decay_params]
 
-        optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=self.training_args.learning_rate)
+        optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=self.config.training_args.learning_rate)
         # Note -> the training dataloader needs to be prepared before we grab his length below (cause its length will be
         # shorter in multiprocess)
 
@@ -223,17 +229,17 @@ class XLMRobertaModel(torch.nn.Module):
         overrode_max_train_steps = False
         num_update_steps_per_epoch = math.ceil(len(train_dataloader) / gradient_accumulation_steps)
         
-        if self.training_args.max_train_steps is None:
-            self.training_args.max_train_steps = self.training_args.num_train_epochs * num_update_steps_per_epoch
+        if self.config.training_args.max_train_steps is None:
+            self.config.training_args.max_train_steps = self.config.training_args.num_train_epochs * num_update_steps_per_epoch
             overrode_max_train_steps = True
 
         lr_scheduler = get_scheduler(
-            name=self.training_args.lr_scheduler_type,
+            name=self.config.training_args.lr_scheduler_type,
             optimizer=optimizer,
-            num_warmup_steps=self.training_args.num_warmup_steps * self.accelerator.num_processes,
-            num_training_steps=self.training_args.max_train_steps
+            num_warmup_steps=self.config.training_args.num_warmup_steps * self.accelerator.num_processes,
+            num_training_steps=self.config.training_args.max_train_steps
             if overrode_max_train_steps
-            else self.training_args.max_train_steps * self.accelerator.num_processes,
+            else self.config.training_args.max_train_steps * self.accelerator.num_processes,
         )
 
         # Prepare everything with our `accelerator`.
@@ -248,12 +254,12 @@ class XLMRobertaModel(torch.nn.Module):
         # We need to recalculate our total training steps as the size of the training dataloader may have changed.
         num_update_steps_per_epoch = math.ceil(len(self.train_dataloader) / gradient_accumulation_steps)
         if overrode_max_train_steps:
-            self.training_args.max_train_steps = self.training_args.num_train_epochs * num_update_steps_per_epoch
+            self.config.training_args.max_train_steps = self.config.training_args.num_train_epochs * num_update_steps_per_epoch
         # Afterwards we recalculate our number of training epochs
-        self.training_args.num_train_epochs = math.ceil(self.training_args.max_train_steps / num_update_steps_per_epoch)
+        self.config.training_args.num_train_epochs = math.ceil(self.config.training_args.max_train_steps / num_update_steps_per_epoch)
 
         # Figure out how many steps we should save the Accelerator states
-        checkpointing_steps = self.training_args.checkpointing_steps
+        checkpointing_steps = self.config.training_args.checkpointing_steps
         if checkpointing_steps is not None and checkpointing_steps.isdigit():
             checkpointing_steps = int(checkpointing_steps)
 
@@ -266,7 +272,7 @@ class XLMRobertaModel(torch.nn.Module):
         #     experiment_config["lr_scheduler_type"] = experiment_config["lr_scheduler_type"].value
         #     accelerator.init_trackers("mlm_no_trainer", experiment_config)
 
-        self.total_batch_size = self.training_args.per_device_train_batch_size * self.accelerator.num_processes * gradient_accumulation_steps
+        self.total_batch_size = self.config.training_args.per_device_train_batch_size * self.accelerator.num_processes * gradient_accumulation_steps
     
     
     def fit_batch(self, batch_data, current_step=None):
@@ -282,7 +288,7 @@ class XLMRobertaModel(torch.nn.Module):
             self.lr_scheduler.step()
             self.optimizer.zero_grad()
 
-            gathered_loss = self.accelerator.gather_for_metrics(loss.repeat(self.training_args.per_device_eval_batch_size))
+            gathered_loss = self.accelerator.gather_for_metrics(loss.repeat(self.config.training_args.per_device_eval_batch_size))
             self.current_step += 1
             if current_step is None:
                 current_step = self.current_step
@@ -328,7 +334,7 @@ class XLMRobertaModel(torch.nn.Module):
                 outputs = self.model(**batch)
 
             loss = outputs.loss
-            losses.append(self.accelerator.gather_for_metrics(loss.repeat(self.training_args.per_device_eval_batch_size)))
+            losses.append(self.accelerator.gather_for_metrics(loss.repeat(self.config.training_args.per_device_eval_batch_size)))
 
         losses = torch.cat(losses)
         if current_step is None:
