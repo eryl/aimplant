@@ -12,7 +12,7 @@ from tqdm import trange, tqdm
 import sys
 
 
-APP_PATH = Path('apps')/ 'xlmroberta_mlm'
+APP_PATH = Path('federatedhealth_mlm_job') / 'app'
 
 from federatedhealth.nlp_models import XLMRobertaModel
 from federatedhealth.config import load_config
@@ -50,12 +50,14 @@ def main():
     
     model = XLMRobertaModel()
     
-    config = load_config()
+    training_config = args.app_dir / 'config' / 'train_config.json'
+    
+    config = load_config(override_path=str(training_config))
     training_data_path = config.data_config.training_data
     dev_data_path = config.data_config.dev_data
     test_data_path = config.data_config.test_data
     
-    model.initialize(workspace_dir, training_data_path, dev_data_path, test_data_path)
+    model.initialize(workspace_dir, training_data_path, dev_data_path, test_data_path, training_override=config.training_args)
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
