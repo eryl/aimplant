@@ -26,7 +26,7 @@ from tqdm import tqdm
 
 import torch
 from torch.optim import AdamW
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from torch.utils.tensorboard import SummaryWriter
 from transformers import AutoTokenizer, AutoModelForMaskedLM
 from peft import LoraConfig, TaskType, get_peft_model
@@ -197,13 +197,16 @@ class XLMRobertaModel(torch.nn.Module):
 
         # Data collator
         # This one will take care of randomly masking the tokens.
-        # TODO: Set the MLM probability and batch sizes as client arguments
-        data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm_probability=self.training_args.mlm_probability)
+        data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm_probability=self.config.training_args.mlm_probability)
 
-
+        train_samples = self.config.training_args.train_samples
+        train_sampler = RandomSampler(train_dataset, replacement=False, num_samples=train_samples)
+        
+        eval_samples = self.config.training_args.eval_samples
+        eval_sampler = RandomSampler(eval_dataset, replacement=False, num_samples=eval_samples)
         # DataLoaders creation:
-        train_dataloader = DataLoader(train_dataset, shuffle=True, collate_fn=data_collator, batch_size=training_batch_size)
-        eval_dataloader = DataLoader(eval_dataset, collate_fn=data_collator, batch_size=eval_batch_size)
+        train_dataloader = DataLoader(train_dataset, sampler=train_sampler, collate_fn=data_collator, batch_size=training_batch_size)
+        eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, collate_fn=data_collator, batch_size=eval_batch_size)
 
         # Optimizer
         # Split weights in two groups, one with weight decay and the other not.
