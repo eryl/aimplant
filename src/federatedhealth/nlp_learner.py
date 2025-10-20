@@ -87,7 +87,9 @@ class NLPLearner(Learner):
         )
         
         self.model = XLMRobertaModel()
-        self.config = load_config()
+        app_config_dir = ws.get_app_config_dir(fl_ctx.get_job_id())
+        train_config_path = os.path.join(app_config_dir, 'train_config.json')
+        self.config = load_config(train_config_path)
         data_config = self.config.data_config
         
         self.training_data_path = data_config.training_data
@@ -97,7 +99,7 @@ class NLPLearner(Learner):
         #train_dataset_path = os.path.join(self.data_path, self.client_id + "_train.txt")
         #dev_dataset_path = os.path.join(self.data_path, self.client_id + "_dev.txt")
         #test_dataset_path = os.path.join(self.data_path, self.client_id + "_test.txt")
-        self.model.initialize(app_dir, self.training_data_path, self.dev_data_path, self.test_data_path)
+        self.model.initialize(app_dir, self.training_data_path, self.dev_data_path, self.test_data_path, training_override=self.config.training_args)
         
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
@@ -151,7 +153,7 @@ class NLPLearner(Learner):
             steps_to_this_epoch = (processed_epochs + epoch)*epoch_len   # Since epoch counts from 0, this will be the number of steps up to the current epoch
             if abort_signal.triggered:
                 return make_reply(ReturnCode.TASK_ABORTED)
-                
+            
             self.model.train()
             
             self.epoch_global = self.epoch_of_start_time + epoch
