@@ -10,8 +10,8 @@
         "num_warmup_steps": 0,
         "checkpointing_steps": null,
         "aggregation_epochs": 1,
-        "train_samples": 262144,
-        "eval_samples": 32768
+        "train_samples": 65536,
+        "eval_samples": 4096
     },
 
     "lora_config": {
