@@ -21,6 +21,7 @@ from itertools import chain
 import time
 from typing import Optional, Literal, Union, TypeVar, Type
 import importlib
+import sys
 
 from tqdm import tqdm
 
@@ -328,11 +329,13 @@ class XLMRobertaModel(torch.nn.Module):
                 #         accelerator.save_state(output_dir)
 
 
-    def local_valid(self, current_step=None):
+    def local_valid(self, current_step=None, tqdm_sink=None):
+        if tqdm_sink is None:
+            tqdm_sink = sys.stderr
         self.model.eval()
         losses = []
         
-        for step, batch in enumerate(tqdm(self.eval_dataloader, desc="Dev batch")):
+        for step, batch in enumerate(tqdm(self.eval_dataloader, desc="Dev batch", file=tqdm_sink)):
             with torch.no_grad():
                 outputs = self.model(**batch)
 

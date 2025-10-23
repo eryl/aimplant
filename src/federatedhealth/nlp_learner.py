@@ -23,8 +23,6 @@ from tqdm import tqdm
 
 import numpy as np
 import torch
-from federatedhealth.nlp_models import XLMRobertaModel
-from federatedhealth.config import load_config
 
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
@@ -53,6 +51,10 @@ from datasets import load_dataset
 from accelerate import Accelerator, DistributedType
 #from accelerate.logging import get_logger
 #from accelerate.utils import set_seed
+
+from federatedhealth.nlp_models import XLMRobertaModel
+from federatedhealth.config import load_config
+from federatedhealth.tqdm_logger import TQDMLogger
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -162,7 +164,8 @@ class NLPLearner(Learner):
                 fl_ctx,
                 f"Local epoch {self.client_id}: {epoch + 1}/{self.model.aggregation_epochs}",
             )
-            for i, batch_data in enumerate(tqdm(self.model.train_dataloader, desc="Training batch")):
+            tqdm_sink = TQDMLogger(self, fl_ctx)
+            for i, batch_data in enumerate(tqdm(self.model.train_dataloader, desc="Training batch", file=tqdm_sink)):
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
                 current_step = steps_to_this_epoch + i
@@ -231,7 +234,8 @@ class NLPLearner(Learner):
         
         if validate_type == ValidateType.BEFORE_TRAIN_VALIDATE:
             # perform valid before local train
-            global_metric = self.model.local_valid(current_step)
+            tqdm_sink = TQDMLogger(self, fl_ctx)
+            global_metric = self.model.local_valid(current_step, tqdm_sink=tqdm_sink)
             
             if abort_signal.triggered:
                 return make_reply(ReturnCode.TASK_ABORTED)
