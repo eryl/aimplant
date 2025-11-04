@@ -5,7 +5,7 @@
         "learning_rate": 1e-4,
         "weight_decay": 1e-3,
         "max_train_steps": null,
-        "num_train_epochs": 10,
+        "num_train_epochs": 100,
         "lr_scheduler_type": "linear",
         "num_warmup_steps": 0,
         "checkpointing_steps": null,
