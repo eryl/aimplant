@@ -73,7 +73,7 @@ def main():
             for batch_data in tqdm(model.train_dataloader, desc='Batch'):
                 model.fit_batch(batch_data)
         
-        perplexity = model.local_valid()
+        eval_loss, perplexity = model.local_valid()
         
         if perplexity < best_perplexity:
             best_model_path = workspace_dir / f"best_model_epoch-{epoch+1}.pt"
