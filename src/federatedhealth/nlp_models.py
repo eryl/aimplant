@@ -154,39 +154,22 @@ class XLMRobertaModel(torch.nn.Module):
         padding = False
         
         tokenizer = self.tokenizer
-        def tokenize_function(examples):
-            return tokenizer(examples[text_column_name], return_special_tokens_mask=True)
-
+        token_fun = partial(tokenize_function, tokenizer=tokenizer, text_column_name=text_column_name)
         # Where are the cached versions saved?
         with self.accelerator.main_process_first():
             tokenized_datasets = raw_datasets.map(
-                tokenize_function,
+                token_fun,
                 batched=True,
                 #num_proc=args.preprocessing_num_workers,
                 remove_columns=column_names,
                 load_from_cache_file=True,
                 desc="Running tokenizer on every text in dataset",
             )
-            
-        # Main data processing function that will concatenate all texts from our dataset and generate chunks of
-        # max_seq_length.
-        def group_texts(examples):
-            # Concatenate all texts.
-            concatenated_examples = {k: list(chain(*examples[k])) for k in examples.keys()}
-            total_length = len(concatenated_examples[list(examples.keys())[0]])
-            # We drop the small remainder, and if the total_length < max_seq_length  we exclude this batch and return an empty dict.
-            # We could add padding if the model supported it instead of this drop, you can customize this part to your needs.
-            total_length = (total_length // max_seq_length) * max_seq_length
-            # Split by chunks of max_len.
-            result = {
-                k: [t[i : i + max_seq_length] for i in range(0, total_length, max_seq_length)]
-                for k, t in concatenated_examples.items()
-            }
-            return result
-        
+
+        group_fun = partial(group_texts, max_seq_length=max_seq_length)
         with self.accelerator.main_process_first():
             tokenized_datasets = tokenized_datasets.map(
-                    group_texts,
+                    group_fun,
                     batched=True,
                     #num_proc=args.preprocessing_num_workers,
                     load_from_cache_file=True,
@@ -195,6 +178,7 @@ class XLMRobertaModel(torch.nn.Module):
         
         train_dataset = tokenized_datasets["train"]
         eval_dataset = tokenized_datasets["dev"]
+        test_dataset = tokenized_datasets["test"]
 
         # Data collator
         # This one will take care of randomly masking the tokens.
@@ -205,9 +189,12 @@ class XLMRobertaModel(torch.nn.Module):
         
         eval_samples = self.config.training_args.eval_samples
         eval_sampler = RandomSampler(eval_dataset, replacement=False, num_samples=eval_samples)
+        
         # DataLoaders creation:
         train_dataloader = DataLoader(train_dataset, sampler=train_sampler, collate_fn=data_collator, batch_size=training_batch_size, num_workers=self.config.training_args.num_train_workers)
         eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, collate_fn=data_collator, batch_size=eval_batch_size, num_workers=self.config.training_args.num_eval_workers)
+        
+        test_dataloader = DataLoader(test_dataset, shuffle=False, collate_fn=data_collator, batch_size=eval_batch_size, num_workers=self.config.training_args.num_eval_workers)
 
         # Optimizer
         # Split weights in two groups, one with weight decay and the other not.
@@ -247,8 +234,8 @@ class XLMRobertaModel(torch.nn.Module):
         )
 
         # Prepare everything with our `accelerator`.
-        self.model, self.optimizer, self.train_dataloader, self.eval_dataloader, self.lr_scheduler = self.accelerator.prepare(
-            self.model, optimizer, train_dataloader, eval_dataloader, lr_scheduler
+        self.model, self.optimizer, self.train_dataloader, self.eval_dataloader, self.test_dataloader, self.lr_scheduler = self.accelerator.prepare(
+            self.model, optimizer, train_dataloader, eval_dataloader, test_dataloader, lr_scheduler
         )
 
         # On TPU, the tie weights in our model have been disconnected, so we need to restore the ties.
