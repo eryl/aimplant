@@ -22,6 +22,7 @@ import time
 from typing import Optional, Literal, Union, TypeVar, Type
 import importlib
 import sys
+from functools import partial
 
 from tqdm import tqdm
 
@@ -29,7 +30,7 @@ import torch
 from torch.optim import AdamW
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from torch.utils.tensorboard import SummaryWriter
-from transformers import AutoTokenizer, AutoModelForMaskedLM
+from transformers import AutoTokenizer, AutoModelForMaskedLM, XLMRobertaModel
 from peft import LoraConfig, TaskType, get_peft_model
 
 from federatedhealth.config import TrainingArgs, load_config
@@ -52,6 +53,161 @@ from accelerate import Accelerator, DistributedType
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+
+def tokenize_function(examples, tokenizer, text_column_name):
+    tokenized = tokenizer(examples[text_column_name], return_special_tokens_mask=True, return_offsets_mapping=True)
+    return tokenized
+
+
+def group_subwords(examples, tokenizer, text_column_name, ignore_characters=".,:;!?\"'“”‘’()[]{}*"):
+    examples["subpieces"] = [tokenizer.convert_ids_to_tokens(input_ids) for input_ids in examples["input_ids"]]
+    collected_word_offsets = []
+    word_token_groups = []
+    for i, subpieces in enumerate(examples["subpieces"]):
+        input_ids = examples["input_ids"][i]
+        offsets = examples["offset_mapping"][i]
+        special_tokens = examples["special_tokens_mask"][i]
+        word_offsets = []
+        word_tokens = []  # Collects the token indices for each word, so that we can later easily aggregate the embeddings per word. These need to take special tokens into account (but not store them).
+        # We will go through the subpieces to gradually build merged offsets. If a subword 
+        # starts with `_`, it means that it's the first piece of a word. When we see such a piece,
+        # we start a new word offset. Otherwise, we extend the current word offset to include
+        # the current subword. We also have to check that the token is not a special tokens. 
+        # These never gets merged and are instead skipped (they don't appear in the input 
+        # text after all).
+        current_word = None
+        current_offset_start = 0
+        current_offset_end = 0
+        for j, subpiece in enumerate(subpieces):
+            if special_tokens[j]:
+                if current_word is not None:
+                    word_tokens.append(current_word)
+                    word_offsets.append((current_offset_start, current_offset_end))
+                current_word = None  # Special tokens resets the current word
+                continue
+            elif current_word is None or subpiece.startswith('▁') or subpiece in ignore_characters:
+                if current_word is not None:
+                    word_tokens.append(current_word)
+                    word_offsets.append((current_offset_start, current_offset_end))
+                current_word = [j]
+                current_offset_start, current_offset_end = offsets[j]
+                if (subpiece in ignore_characters or 
+                    (len(subpiece) == 2 and subpiece[1] in ignore_characters)):
+                    word_tokens.append(current_word)
+                    word_offsets.append(tuple(offsets[j]))
+                    current_word = None  # If the subpiece is an ignored character, we don't start a new word with it
+            else:
+                current_word.append(j)
+                current_offset_end = offsets[j][1]
+        if current_word is not None:
+            word_tokens.append(current_word)
+            word_offsets.append(tuple(offsets[j]))
+
+        collected_word_offsets.append(word_offsets)
+        word_token_groups.append(word_tokens)
+    examples["word_token_groups"] = word_token_groups
+    examples["word_offsets"] = collected_word_offsets
+    words = []
+    for i, word_offsets in enumerate(examples["word_offsets"]):
+        text = examples[text_column_name][i]
+        word_list = []
+        for offset in word_offsets:
+            word_list.append(text[offset[0]:offset[1]])
+        words.append(word_list)
+    examples["words"] = words
+    return examples
+
+
+# Main data processing function that will concatenate all texts from our dataset and generate chunks of
+# max_seq_length.
+def group_texts(examples, max_seq_length):
+    # Concatenate all texts.
+    concatenated_examples = {k: list(chain(*examples[k])) for k in examples.keys()}
+    total_length = len(concatenated_examples[list(examples.keys())[0]])
+    # We drop the small remainder, and if the total_length < max_seq_length  we exclude this batch and return an empty dict.
+    # We could add padding if the model supported it instead of this drop, you can customize this part to your needs.
+    total_length = (total_length // max_seq_length) * max_seq_length
+    # Split by chunks of max_len.
+    result = {
+        k: [t[i : i + max_seq_length] for i in range(0, total_length, max_seq_length)]
+        for k, t in concatenated_examples.items()
+    }
+    return result
+
+def group_word_tokens(examples, max_seq_length):
+    # We group the texts together based on their word tokens. We don't want to 
+    # split over words, so accumulate groups of max_seq_length based on words.
+    grouped_results = {k: [] for k in ("input_ids", 
+                                       "words",
+                                       "attention_mask", 
+                                       "word_token_groups", 
+                                       "special_tokens_mask")}
+    
+    for example_i, token_ids in enumerate(examples["input_ids"]):
+        special_tokens = examples["special_tokens_mask"][example_i]
+        words = examples["words"][example_i]
+        if all(special_tokens):
+            # If the whole entry is special tokens, it was likely an empty line which we skip here.
+            continue
+        word_token_groups = examples["word_token_groups"][example_i]
+        # We start by creating a mapping from token to the word group it belongs 
+        # to, or `None` if it is a special token or ignored character
+        # This index will also correspond to the word that the group belongs to, so 
+        # picking the corresponding index from the word list will get us the word.
+        token_to_group = [None] * len(token_ids)
+        for group_idx, token_group in enumerate(word_token_groups):
+            for token_idx in token_group:
+                token_to_group[token_idx] = group_idx
+
+        current_token_chunk = []
+        current_groups_chunk = []
+        current_word_chunk = []
+        current_special_tokens_chunk = []
+        current_chunk_start = 0
+        current_length = 0
+        i = 0
+        while i < len(token_ids):
+            group_idx = token_to_group[i]
+            if group_idx is None:
+                # Special token or ignored character, just add it
+                group_length = 1
+            else:
+                group_length = len(word_token_groups[group_idx])
+
+            if current_length + group_length > max_seq_length:
+                # We need to start a new chunk
+                if len(current_token_chunk) > 0:
+                        grouped_results["input_ids"].append(current_token_chunk)
+                        grouped_results["word_token_groups"].append(current_groups_chunk)
+                        grouped_results["words"].append(current_word_chunk)
+                        grouped_results["attention_mask"].append([1]*len(current_token_chunk))  # We should attend all the tokens
+                        grouped_results["special_tokens_mask"].append(current_special_tokens_chunk)
+                current_token_chunk = []
+                current_groups_chunk = []
+                current_word_chunk = []
+                current_special_tokens_chunk = []
+                current_length = 0
+                current_chunk_start = i
+            else:
+                current_token_chunk.extend(token_ids[i:i+group_length])
+                current_special_tokens_chunk.extend(special_tokens[i:i+group_length])
+                current_length += group_length
+                i += group_length
+                if group_idx is not None:
+                    group = word_token_groups[group_idx]
+                    group_relative_indices = [idx - current_chunk_start for idx in group]
+                    current_groups_chunk.append(group_relative_indices)
+                    word = words[group_idx]
+                    current_word_chunk.append(word)
+
+        # Add any remaining tokens as a final chunk
+        if len(current_token_chunk) > 0:
+            grouped_results["input_ids"].append(current_token_chunk)
+            grouped_results["word_token_groups"].append(current_groups_chunk)
+            grouped_results["words"].append(current_word_chunk)
+            grouped_results["attention_mask"].append([1]*len(current_token_chunk)) # We should attend all the tokens
+            grouped_results["special_tokens_mask"].append(current_special_tokens_chunk)
+    return grouped_results
 
 class XLMRobertaModel(torch.nn.Module):
     def __init__(self):
@@ -121,6 +277,43 @@ class XLMRobertaModel(torch.nn.Module):
         dataset = load_dataset(extension, data_files=data_files, cache_dir=cache_dir)
         return dataset
     
+    def tokenize_and_group_data(self, raw_datasets, remove_column_names, num_proc=None):
+        max_seq_length = self.tokenizer.model_max_length
+        text_column_name = "text" if "text" in remove_column_names else remove_column_names[0]
+        padding = False
+        
+        tokenizer = self.tokenizer
+        token_fun = partial(tokenize_function, tokenizer=tokenizer, text_column_name=text_column_name)
+
+        tokenized_datasets = raw_datasets.map(
+            token_fun,
+            batched=True,
+            num_proc=num_proc,
+            load_from_cache_file=True,
+            desc="Running tokenizer on every text in dataset",
+        )
+        
+        subword_fun = partial(group_subwords, tokenizer=tokenizer, text_column_name=text_column_name)
+        tokenized_datasets = tokenized_datasets.map(
+            subword_fun,
+            batched=True,
+            num_proc=num_proc,
+            load_from_cache_file=True,
+            desc="Adding subword tokens",
+        )
+        remove_column_names = ['text', 'offset_mapping', 'subpieces', 'word_offsets']    
+        group_fun = partial(group_word_tokens, max_seq_length=max_seq_length)
+        tokenized_datasets = tokenized_datasets.map(
+                group_fun,
+                batched=True,
+                num_proc=num_proc,
+                remove_columns=remove_column_names,
+                load_from_cache_file=True,
+                desc=f"Grouping texts in chunks of {max_seq_length}",
+            )
+        
+        return tokenized_datasets
+
     def initialize(self, app_dir, train_dataset_path, dev_dataset_path, test_dataset_path, training_override=None):
         # Initialize the accelerator. We will let the accelerator handle device placement for us in this example.
         # If we're using tracking, we also need to initialize it here and it will by default pick up all supported trackers
