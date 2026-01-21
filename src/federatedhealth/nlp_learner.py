@@ -235,15 +235,15 @@ class NLPLearner(Learner):
         if validate_type == ValidateType.BEFORE_TRAIN_VALIDATE:
             # perform valid before local train
             tqdm_sink = TQDMLogger(self, fl_ctx)
-            global_metric = self.model.local_valid(current_step, tqdm_sink=tqdm_sink)
+            eval_loss, perplexity = self.model.local_valid(current_step, tqdm_sink=tqdm_sink)
             
             if abort_signal.triggered:
                 return make_reply(ReturnCode.TASK_ABORTED)
-            self.log_info(fl_ctx, f"val_perplexity_global_model ({model_owner}): {global_metric:.4f}")
+            self.log_info(fl_ctx, f"val_perplexity_global_model ({model_owner}): {perplexity:.4f}")
             # validation metrics will be averaged with weights at server end for best model record
             metric_dxo = DXO(
                 data_kind=DataKind.METRICS,
-                data={MetaKey.INITIAL_METRICS: global_metric},
+                data={MetaKey.INITIAL_METRICS: perplexity},
                 meta={},
             )
             metric_dxo.set_meta_prop(MetaKey.NUM_STEPS_CURRENT_ROUND, len(self.model.eval_dataloader))
