@@ -346,11 +346,43 @@ class XLMRobertaModel(torch.nn.Module):
         if current_step is None:
             current_step = self.current_step
         try:
-            eval_loss = torch.mean(losses)
-            self.writer.add_scalar('dev_loss', eval_loss.item(), current_step)
+            eval_loss = torch.mean(losses).item()
+            self.writer.add_scalar('dev_loss', eval_loss, current_step)
             perplexity = math.exp(eval_loss)
             self.writer.add_scalar('perplexity', perplexity, current_step)
         except OverflowError:
             perplexity = float("inf")
         
-        return perplexity
+        return eval_loss, perplexity
+    
+    def local_test(self, tqdm_sink=None):
+        if tqdm_sink is None:
+            tqdm_sink = sys.stderr
+        
+        self.model.eval()
+
+        losses = []
+        for step, batch in enumerate(tqdm(self.test_dataloader, desc="Test batch", file=tqdm_sink)):
+            with torch.no_grad():
+                outputs = self.model(**batch)
+
+            loss = outputs.loss
+            losses.append(self.accelerator.gather_for_metrics(loss.repeat(self.config.training_args.per_device_eval_batch_size)))
+
+        losses = torch.cat(losses)
+        test_loss = torch.mean(losses).item()
+        try:
+            perplexity = math.exp(test_loss)
+        except OverflowError:
+            perplexity = float("inf")
+        return test_loss, perplexity
+
+        
+
+def load_model_from_checkpoint(model_path):
+    model = XLMRobertaModel()
+    state_dict = torch.load(model_path)
+    if 'model' in state_dict:
+        state_dict = state_dict['model']
+    model.load_state_dict(state_dict)
+    return model
