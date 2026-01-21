@@ -28,6 +28,8 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*.whl
+*.deb
 MANIFEST
 
 # PyInstaller
@@ -218,3 +220,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Transformers cache
+*.arrow
+*hf_cache*
+
+# Nvidia flare
+*workspace*
