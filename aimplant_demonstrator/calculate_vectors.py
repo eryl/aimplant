@@ -35,12 +35,19 @@ def main():
     parser.add_argument('data',
                         help="Path to text file with data to generate vectors for",
                         type=Path)
-    parser.add_argument('output_dir',
+    parser.add_argument('--output_dir',
                         help="Path to directory to save output files",
                         type=Path)
     parser.add_argument('--num-dl-workers', help="Number of processes to use when loading dataset.", type=int, default=8)
     parser.add_argument('--batch-size', help="Size of batches.", type=int, default=8)
-    parser.add_argument('--layer-states', help="What layers to get activations from.", type=int, default=[-4, -3, -2, -1])
+    parser.add_argument('--layer-states', 
+                        help="What layers to get activations from.", 
+                        type=int, 
+                        default=[-4, -3, -2, -1])
+    parser.add_argument('--chunk-size', 
+                        help="The data is collected in chunks before being written to disk. This decides the size of those chunks", 
+                        type=int, 
+                        default=512)
     args = parser.parse_args()
     
     config = load_config()
@@ -52,7 +59,7 @@ def main():
 
     cache_dir = data_directory / "hf_cache"
     
-    output_dir = args.output_dir if args.output_dir else args.model_path.parent / "vector_database"
+    output_dir = args.output_dir if args.output_dir else args.model_path.parent / f"vector_database_{args.model_path.stem}"
     output_dir.mkdir(parents=True, exist_ok=True)
         # We need to check the model format for the federated training
     model = load_model_from_checkpoint(args.model_path)
@@ -63,16 +70,15 @@ def main():
     #collator_fn = DataCollatorWithPadding(tokenizer=model.tokenizer)
     collator_fn = partial(collate_batch, tokenizer=model.tokenizer)
     dataloader = DataLoader(tokenized_dataset, num_workers=args.num_dl_workers, batch_size=args.batch_size, collate_fn=collator_fn)
-    args.output_dir.mkdir(exist_ok=True, parents=True)
-    word_vectors_file = args.output_dir / 'vectors.h5'
-    word_sums_file = args.output_dir / 'vector_sums.sqlite'
+    word_vectors_file = output_dir / 'vectors.h5'
+    word_sums_file = output_dir / 'vector_sums.sqlite'
 
     with torch.inference_mode(), h5py.File(word_vectors_file, 'w') as store, SqliteDict(word_sums_file, autocommit=False) as db:
         model.eval()
         vector_sums = dict()
         vector_chunk = []
         words_chunk = []
-        chunk_size = 128
+        chunk_size = args.chunk_size
 
         for batch in tqdm(dataloader):
             predictions = model(input_ids=batch['input_ids'].to(device), 
@@ -107,7 +113,6 @@ def main():
                     if len(vector_sums) > chunk_size:
                         sync_vector_sums(vector_sums, db)
                         vector_sums.clear()
-                    
 
         store_data(vector_chunk, words_chunk, store, chunk_size=chunk_size)
         sync_vector_sums(vector_sums, db)
