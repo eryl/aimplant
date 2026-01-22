@@ -39,9 +39,8 @@ def main():
         # We need to check the model format for the federated training
         models = sorted(args.app_dir.glob("**/*.pt"))
         for model_path in tqdm(models, desc="Evaluating models"):
-            model = XLMRobertaModel()
+            model = load_model_from_checkpoint(model_path)
             model.initialize(args.app_dir, training_data_path, dev_data_path, test_data_path, training_override=config.training_args)
-            model.load_state_dict(torch.load(model_path))
             model.to(device)
             dev_loss, dev_perplexity = model.local_valid()
             test_loss, test_perplexity = model.local_test()
