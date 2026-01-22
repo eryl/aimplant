@@ -54,8 +54,10 @@ from accelerate import Accelerator, DistributedType
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
-def tokenize_function(examples, tokenizer, text_column_name):
-    tokenized = tokenizer(examples[text_column_name], return_special_tokens_mask=True, return_offsets_mapping=True)
+def tokenize_function(examples, tokenizer, text_column_name, return_offsets_mapping=False, return_special_tokens_mask=False):
+    tokenized = tokenizer(examples[text_column_name], 
+                          return_special_tokens_mask=return_special_tokens_mask, 
+                          return_offsets_mapping=return_offsets_mapping)
     return tokenized
 
 
@@ -226,7 +228,9 @@ class XLMRobertaModel(torch.nn.Module):
                 
         self.model_name = self.config.model_path
         self.base_model = AutoModelForMaskedLM.from_pretrained(
-            self.model_name#, output_attentions=False, output_hidden_states=False
+            self.model_name,
+            dtype=torch.bfloat16#, output_attentions=False, output_hidden_states=False
+
         )
         
         for name, param in self.base_model.named_parameters():
@@ -283,8 +287,11 @@ class XLMRobertaModel(torch.nn.Module):
         padding = False
         
         tokenizer = self.tokenizer
-        token_fun = partial(tokenize_function, tokenizer=tokenizer, text_column_name=text_column_name)
-
+        token_fun = partial(tokenize_function, 
+                            tokenizer=tokenizer, 
+                            text_column_name=text_column_name,
+                            return_offsets_mapping=True, 
+                            return_special_tokens_mask=True)
         tokenized_datasets = raw_datasets.map(
             token_fun,
             batched=True,
