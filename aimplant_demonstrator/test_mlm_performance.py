@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 import json
 import csv
+from typing import Optional
 
 import torch
 from tqdm import trange, tqdm
@@ -32,6 +33,8 @@ def main():
     
     output_dir = args.app_dir / "local_test_results"
     output_dir.mkdir(parents=True, exist_ok=True)
+    best_model_path: Optional[Path] = None
+    best_model_performance = float('inf')
     with open(output_dir / "test_performance.csv", 'w', newline='') as csvfile:
         fieldnames = ['model_checkpoint', 'dev_loss', 'dev_perplexity', 'test_loss', 'test_perplexity']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -51,16 +54,19 @@ def main():
                              'test_loss': test_loss,
                              'test_perplexity': test_perplexity})
             csvfile.flush()
+            if dev_perplexity < best_model_performance:
+                best_model_path = model_path
             with open(performance_output_file, 'w') as f:
                 json.dump({"dev_loss": dev_loss, "dev_perplexity": dev_perplexity,
-                        "test_loss": test_loss, "test_perplexity": test_perplexity}, 
-                        f, 
+                           "test_loss": test_loss, "test_perplexity": test_perplexity}, 
+                        f,
                         indent=2)
-        
-    
-                
-            
-    
-    
+
+    if best_model_path is not None:
+        best_model_symlink: Path = output_dir / "best_local_model.pt"
+        best_model_symlink.unlink(missing_ok=True)
+        best_model_symlink.symlink_to(best_model_path.absolute())
+
+
 if __name__ == '__main__':
     main()
