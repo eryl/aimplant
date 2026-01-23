@@ -40,8 +40,10 @@ def main():
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()  
         # We need to check the model format for the federated training
-        models = sorted(args.app_dir.glob("**/*.pt"))
+        models: list[Path] = sorted(args.app_dir.glob("**/*.pt"))
         for model_path in tqdm(models, desc="Evaluating models"):
+            if model_path.is_symlink():
+                continue
             model = load_model_from_checkpoint(model_path)
             model.initialize(args.app_dir, training_data_path, dev_data_path, test_data_path, training_override=config.training_args)
             model.to(device)
