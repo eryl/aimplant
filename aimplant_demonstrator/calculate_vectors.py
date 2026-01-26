@@ -113,7 +113,7 @@ def main():
                         layer_states = hidden_states[layer_idx]
                         word_vectors = layer_states[example_idx, word_group]
                         word_vector = word_vectors.mean(dim=0)
-                        local_word_vector = word_vector.to(torch.float16).cpu().numpy()
+                        local_word_vector = word_vector.cpu().numpy()
                         vector_chunks[layer_idx].append(local_word_vector)
                         
                         layer_vector_sums = vector_sums[layer_idx]
@@ -126,7 +126,7 @@ def main():
                     positive_word = word in positive_words
                     word_class_chunk.append(positive_word)
                     words_chunk.append(word)
-                    
+
                     if len(words_chunk) >= chunk_size:
                         store_data(vector_chunks, words_chunk, word_class_chunk, store, chunk_size=chunk_size)
                         for v in vector_chunks.values():
@@ -171,7 +171,7 @@ def store_data(vector_chunk, word_chunk, word_class_chunk, store, chunk_size=128
     vectors_group = store.require_group("vectors")
         
     for layer_idx, vectors in vector_chunk.items():
-        stacked_vector_chunk = np.stack(vectors)
+        stacked_vector_chunk = np.stack(vectors).astype(np.float16)
         n_vectors, *vector_shapes = stacked_vector_chunk.shape
         layer_name = f'layer:{layer_idx}'
         

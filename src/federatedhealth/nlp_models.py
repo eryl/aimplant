@@ -229,7 +229,7 @@ class XLMRobertaModel(torch.nn.Module):
         self.model_name = self.config.model_path
         self.base_model = AutoModelForMaskedLM.from_pretrained(
             self.model_name,
-            dtype=torch.bfloat16#, output_attentions=False, output_hidden_states=False
+            #dtype=torch.bfloat16#, output_attentions=False, output_hidden_states=False
 
         )
         
