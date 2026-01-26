@@ -41,6 +41,7 @@ def main():
     parser.add_argument('--output_dir',
                         help="Path to directory to save output files",
                         type=Path)
+    parser.add_argument('--num-proc', help="Number of processes to use when preprocessing dataset.", type=int, default=8)
     parser.add_argument('--num-dl-workers', help="Number of processes to use when loading dataset.", type=int, default=8)
     parser.add_argument('--batch-size', help="Size of batches.", type=int, default=8)
     args = parser.parse_args()
@@ -61,7 +62,7 @@ def main():
     model.to(device)
     dataset = load_dataset(extension, data_files={'data': str(args.data)}, cache_dir=cache_dir)['data']
 
-    tokenized_dataset = model.tokenize_and_group_data(dataset, dataset.column_names)
+    tokenized_dataset = model.tokenize_and_group_data(dataset, dataset.column_names, num_proc=args.num_proc)
     #collator_fn = DataCollatorWithPadding(tokenizer=model.tokenizer)
     collator_fn = partial(collate_batch, tokenizer=model.tokenizer)
     dataloader = DataLoader(tokenized_dataset, num_workers=args.num_dl_workers, batch_size=args.batch_size, collate_fn=collator_fn)
