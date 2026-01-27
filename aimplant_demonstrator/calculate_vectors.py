@@ -61,8 +61,7 @@ def main():
     extension = 'text'
 
     cache_dir = data_directory / "hf_cache"
-    
-    output_dir = args.output_dir if args.output_dir else args.model_path.parent / f"vector_database_{args.model_path.stem}"
+    output_dir = args.output_dir if args.output_dir else args.model_path.parent / f"vector_database_{args.model_path.absolute().stem}"
     output_dir.mkdir(parents=True, exist_ok=True)
         # We need to check the model format for the federated training
     model = load_model_from_checkpoint(args.model_path)
