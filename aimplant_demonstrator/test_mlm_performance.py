@@ -18,6 +18,7 @@ def main():
     parser.add_argument('--test-data', 
                         help="Path to text file with test data, if not given, uses the one from config", 
                         type=Path)
+    parser.add_argument('--model-filter', help="Give a glob filter to only include matching files", default="*.pt")
     args = parser.parse_args()
     
     config = load_config()
@@ -40,7 +41,7 @@ def main():
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()  
         # We need to check the model format for the federated training
-        models: list[Path] = sorted(args.app_dir.glob("**/*.pt"))
+        models: list[Path] = sorted(args.app_dir.glob(f"**/{args.model_filter}"))
         for model_path in tqdm(models, desc="Evaluating models"):
             if model_path.is_symlink():
                 continue
