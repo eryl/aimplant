@@ -227,3 +227,8 @@ __marimo__/
 
 # Nvidia flare
 *workspace*
+
+# Don't index data files
+*.lance
+*.h5
+*.sqlite3
