@@ -76,7 +76,7 @@ def main():
     collator_fn = partial(collate_batch, tokenizer=model.tokenizer)
     dataloader = DataLoader(tokenized_dataset, num_workers=args.num_dl_workers, batch_size=args.batch_size, collate_fn=collator_fn)
     word_sums_files = {layer_idx: output_dir / f'vector_sums_layer_{layer_idx}.sqlite' for layer_idx in args.layer_states}
-    word_sums_dbs = {layer_idx: SqliteDict(f, autocommit=False) for layer_idx, f in word_sums_files.items()}
+    #word_sums_dbs = {layer_idx: SqliteDict(f, autocommit=False) for layer_idx, f in word_sums_files.items()}
 
     stop_list = set()
     if args.stop_list is not None:
@@ -101,7 +101,7 @@ def main():
                                 #output_attentions=True, 
                                 output_hidden_states=True)
             
-            hidden_states = predictions["hidden_states"]
+            hidden_states = [(layer_idx, predictions["hidden_states"][layer_idx].cpu().numpy()) for layer_idx in args.layer_states]
             
             for example_idx, (words, word_groups) in enumerate(zip(batch["words"], batch["word_token_groups"])):
                 for word_idx, (word, word_group) in enumerate(zip(words, word_groups)):
@@ -111,11 +111,10 @@ def main():
                     
                     layers_word_vectors = dict()
 
-                    for layer_idx in args.layer_states:
-                        layer_states = hidden_states[layer_idx]
+                    for layer_idx, layer_states in hidden_states:
                         word_vectors = layer_states[example_idx, word_group]
-                        word_vector = word_vectors.mean(dim=0)
-                        local_word_vector = word_vector.cpu().numpy()
+                        local_word_vector = word_vectors.mean(axis=0)
+                        #local_word_vector = word_vector.cpu().numpy()
                         layer_name = f"layer{layer_idx}"
                         layers_word_vectors[layer_name] = local_word_vector
                         layer_vector_sums = vector_sums[layer_idx]
@@ -129,17 +128,17 @@ def main():
                     labeled_word = (positive_word, word)
                     vectordb.add_data(labeled_word, layers_word_vectors)
                     
-                    for layer_idx, layer_vector_sums in vector_sums.items():
-                        if len(layer_vector_sums) > args.chunk_size:
-                            db = word_sums_dbs[layer_idx]
-                            sync_vector_sums(layer_vector_sums, db)
-                            layer_vector_sums.clear()
+                    # for layer_idx, layer_vector_sums in vector_sums.items():
+                    #     if len(layer_vector_sums) > args.chunk_size:
+                    #         db = word_sums_dbs[layer_idx]
+                    #         sync_vector_sums(layer_vector_sums, db)
+                    #         layer_vector_sums.clear()
         
-        for layer_idx, layer_vector_sums in vector_sums.items():
-            db = word_sums_dbs[layer_idx]
-            sync_vector_sums(layer_vector_sums, db)
-            layer_vector_sums.clear()
-            db.close()
+        # for layer_idx, layer_vector_sums in vector_sums.items():
+        #     db = word_sums_dbs[layer_idx]
+        #     sync_vector_sums(layer_vector_sums, db)
+        #     layer_vector_sums.clear()
+        #     db.close()
 
 def sync_vector_sums(vector_sums, db):
     for word, (count, vectors) in vector_sums.items():
