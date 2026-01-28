@@ -41,7 +41,7 @@ def main():
                         type=Path)
     parser.add_argument('--positive-words', help="If supplied, will be used to tag words as \"positive\", which can be used downstreams", type=Path)
     parser.add_argument('--stop-list', help="If supplied, will be used as a filter and skip any words in this list", type=Path)
-    parser.add_argument('--output_dir',
+    parser.add_argument('--output-dir',
                         help="Path to directory to save output files",
                         type=Path)
     parser.add_argument('--num-dl-workers', help="Number of processes to use when loading dataset.", type=int, default=8)
