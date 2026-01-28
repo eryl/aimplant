@@ -179,7 +179,7 @@ class DataBaseHandler:
                 # The labeled vectors are lists of pairs (label, vector)
                 if vector_name not in self.tables:
                     vector_dimension = vectors[0].shape[0]
-                    vector_type = pa.list_(pa.float32(), vector_dimension)
+                    vector_type = pa.list_(pa.float16(), vector_dimension)
                     schema = pa.schema(
                         [
                             pa.field("id", pa.int64()),
@@ -190,7 +190,7 @@ class DataBaseHandler:
                     )
                     table = self.db.create_table(vector_name, schema=schema, mode="overwrite")
                     self.tables[vector_name] = table
-                data = [{"word": word, "label": label, "vector": vector} for (label, word), vector in zip(self.words, vectors)]
+                data = [{"word": word, "label": label, "vector": vector.astype(np.float16)} for (label, word), vector in zip(self.words, vectors)]
                 self.tables[vector_name].add(data)
             self.words.clear()
             self.vectors.clear()
