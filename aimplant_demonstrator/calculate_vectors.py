@@ -61,7 +61,7 @@ def main():
     extension = 'text'
 
     cache_dir = data_directory / "hf_cache"
-    output_dir = args.output_dir if args.output_dir else args.model_path.parent / f"vector_database_{args.model_path.absolute().stem}"
+    output_dir = args.output_dir if args.output_dir else args.model_path.parent / f"vector_database_{args.model_path.resolve().stem}"
     output_dir.mkdir(parents=True, exist_ok=True)
         # We need to check the model format for the federated training
     model = load_model_from_checkpoint(args.model_path)
@@ -73,8 +73,8 @@ def main():
     collator_fn = partial(collate_batch, tokenizer=model.tokenizer)
     dataloader = DataLoader(tokenized_dataset, num_workers=args.num_dl_workers, batch_size=args.batch_size, collate_fn=collator_fn)
     word_vectors_file = output_dir / 'vectors.h5'
-    word_sums_files = {layer_idx: output_dir / f'vector_sums_layer_{layer_idx}.sqlite' for layer_idx in args.layer_states}
-    word_sums_dbs = {layer_idx: SqliteDict(f, autocommit=False) for layer_idx, f in word_sums_files.items()}
+    #word_sums_files = {layer_idx: output_dir / f'vector_sums_layer_{layer_idx}.sqlite' for layer_idx in args.layer_states}
+    #word_sums_dbs = {layer_idx: SqliteDict(f, autocommit=False) for layer_idx, f in word_sums_files.items()}
 
     stop_list = set()
     if args.stop_list is not None:
@@ -100,19 +100,18 @@ def main():
                                 #output_attentions=True, 
                                 output_hidden_states=True)
             
-            hidden_states = predictions["hidden_states"]
-            
+            #hidden_states = predictions["hidden_states"]
+            hidden_states = [(layer_idx, predictions["hidden_states"][layer_idx].cpu().numpy()) for layer_idx in args.layer_states]
+
             for example_idx, (words, word_groups) in enumerate(zip(batch["words"], batch["word_token_groups"])):
                 for word_idx, (word, word_group) in enumerate(zip(words, word_groups)):
                     word = word.lower()
                     if word in stop_list:
                         continue
-
-                    for layer_idx in args.layer_states:
-                        layer_states = hidden_states[layer_idx]
+                    
+                    for layer_idx, layer_states in hidden_states:
                         word_vectors = layer_states[example_idx, word_group]
-                        word_vector = word_vectors.mean(dim=0)
-                        local_word_vector = word_vector.cpu().numpy()
+                        local_word_vector = word_vectors.mean(axis=0)
                         vector_chunks[layer_idx].append(local_word_vector)
                         
                         layer_vector_sums = vector_sums[layer_idx]
@@ -133,18 +132,18 @@ def main():
                         words_chunk.clear()
                         word_class_chunk.clear()
 
-                    for layer_idx, layer_vector_sums in vector_sums.items():
-                        if len(layer_vector_sums) > chunk_size:
-                            db = word_sums_dbs[layer_idx]
-                            sync_vector_sums(layer_vector_sums, db)
-                            layer_vector_sums.clear()
+                    # for layer_idx, layer_vector_sums in vector_sums.items():
+                    #     if len(layer_vector_sums) > chunk_size:
+                    #         db = word_sums_dbs[layer_idx]
+                    #         sync_vector_sums(layer_vector_sums, db)
+                    #         layer_vector_sums.clear()
 
         store_data(vector_chunks, words_chunk, word_class_chunk, store, chunk_size=chunk_size)
-        for layer_idx, layer_vector_sums in vector_sums.items():
-            db = word_sums_dbs[layer_idx]
-            sync_vector_sums(layer_vector_sums, db)
-            layer_vector_sums.clear()
-            db.close()
+        # for layer_idx, layer_vector_sums in vector_sums.items():
+        #     db = word_sums_dbs[layer_idx]
+        #     sync_vector_sums(layer_vector_sums, db)
+        #     layer_vector_sums.clear()
+        #     db.close()
 
 def sync_vector_sums(vector_sums, db):
     for word, (count, vectors) in vector_sums.items():
