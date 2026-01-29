@@ -47,7 +47,7 @@ def main():
             if table is None:
                 table = db.create_table("words", data)
             else:
-                table.add(data)
+                table.add(data, on_bad_vectors='drop')
     if table is not None:
         print("Building index")
         table.create_index(metric="cosine", num_partitions=16, num_sub_vectors=4, vector_column_name='vector')
