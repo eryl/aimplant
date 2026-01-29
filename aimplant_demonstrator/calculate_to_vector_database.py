@@ -31,6 +31,7 @@ def collate_batch(batch, tokenizer):
     collated.update(padded)
     return collated
 
+
 def main():
     parser = argparse.ArgumentParser(description="Create vector database for trained XLMRoberta models on the test data")
     parser.add_argument('model_path',
@@ -53,7 +54,7 @@ def main():
     parser.add_argument('--chunk-size', 
                         help="The data is collected in chunks before being written to disk. This decides the size of those chunks", 
                         type=int, 
-                        default=512)
+                        default=100000)
     args = parser.parse_args()
     
     config = load_config()
@@ -190,7 +191,7 @@ class DataBaseHandler:
                     table = self.db.create_table(vector_name, schema=schema, mode="overwrite")
                     self.tables[vector_name] = table
                 data = [{"word": word, "label": label, "vector": vector.astype(np.float16)} for (label, word), vector in zip(self.words, vectors)]
-                self.tables[vector_name].add(data)
+                self.tables[vector_name].add(data, on_bad_vectors='drop')
             self.words.clear()
             self.vectors.clear()
 
