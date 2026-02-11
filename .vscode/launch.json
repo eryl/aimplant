@@ -9,12 +9,127 @@
             "name": "Python Debugger: nvflare",
             "type": "debugpy",
             "request": "launch",
-            "program": "/home/ubuntu/src/aimplant/.venv/bin/nvflare",
+            "program": "/home/eriky/src/aimplant/.venv/bin/nvflare",
             "console": "integratedTerminal",
             "justMyCode": false,
             "env": {},
             "args": ["simulator", "federatedhealth_mlm_job", "-w", "/tmp/nvflare/workspaces/xlmroberta-mlm", "-n 2", "-t", "1", "-gpu", "0"]
         },
+        {
+            "name": "Python Debugger: local test on nvflare model",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "aimplant_demonstrator/test_mlm_performance.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["simulator_workspaces/xlmroberta-mlm/server/simulate_job/app_server"]
+            },
+        {
+            "name": "Python Debugger: Analyze neighbourhoods",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "aimplant_demonstrator/analyze_neighbourhoods.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {"PYDEVD_UNBLOCK_THREADS_TIMEOUT":"0"},
+                "args": ["/tmp/vector_database/lancedb_direct-site-1_dev-cosine-60-neighbourhoods"]
+        },
+        {
+            "name": "Python Debugger: Search vectors",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "aimplant_demonstrator/vector_search.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {"PYDEVD_UNBLOCK_THREADS_TIMEOUT":"0"},
+            "args": ["local_training/Icarium/local_test_results/best_local_model.pt",
+                     "fedhealth_mlm_data/site-1_dev.txt",
+                     //"/home/eriky/src/aimplant/local_training/Icarium/local_test_results/vector_database_latest_model_epoch-75/lancedb_vector_mean",
+                     "/tmp/vector_database/lancedb_direct",
+                    "--stop-list",
+                    "fedhealth_mlm_data/austen_manual_stop_list.txt",
+                    "--positive-words",
+                    "fedhealth_mlm_data/positive-words.txt",
+                "--metric", "cosine"]
+        },
+        
+        {
+            "name": "Python Debugger: build aggregated vector database",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "aimplant_demonstrator/create_summed_vector_database.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["/home/eriky/src/aimplant/local_training/Icarium/local_test_results/vector_database_latest_model_epoch-75/vectors.h5"]
+        },
+
+        {
+            "name": "Python Debugger: build vector database",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "aimplant_demonstrator/create_vector_database.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["/home/eriky/src/aimplant/local_training/Icarium/local_test_results/vector_database_latest_model_epoch-75/vectors.h5"]
+        },
+        
+        {
+            "name": "Python Debugger: calculate to vector database",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "aimplant_demonstrator/calculate_to_vector_database.py",
+            "console": "integratedTerminal",
+            //"env": {"CUDA_LAUNCH_BLOCKING": "1"},
+            "env": {"PYDEVD_UNBLOCK_THREADS_TIMEOUT":"0"},
+            "justMyCode": false,
+            "args": ["local_training/Icarium/local_test_results/best_local_model.pt", 
+                     "fedhealth_mlm_data/site-1_train.txt",
+                    "--stop-list",
+                    "fedhealth_mlm_data/austen_manual_stop_list.txt",
+                    "--positive-words",
+                    "fedhealth_mlm_data/positive-words.txt",
+                "--output-dir", "/tmp/vector_database"]
+        },
+
+        {
+            "name": "Python Debugger: Calculate vectors",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "aimplant_demonstrator/calculate_vectors.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["local_training/Icarium/local_test_results/best_local_model.pt", 
+                     "fedhealth_mlm_data/site-1_train.txt",
+                    "--stop-list",
+                    "fedhealth_mlm_data/austen_manual_stop_list.txt",
+                    "--positive-words",
+                    "fedhealth_mlm_data/positive-words.txt"
+                ]
+        },
+                {
+            "name": "Python Debugger: Count tokenized words",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "aimplant_demonstrator/count_tokenized_words.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["local_training/Icarium/local_test_results/best_local_model.pt", 
+                     "fedhealth_mlm_data/site-1_train.txt",
+                     "--num-proc", "16"
+                ]
+        },
+        {
+            "name": "Python Debugger: local test",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "aimplant_demonstrator/test_mlm_performance.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["local_training/Icarium",
+                     "--model-filter",
+                     "latest_model*.pt"]
+            },
+        
         {
             "name": "Python Debugger: local train",
             "type": "debugpy",
