@@ -48,8 +48,10 @@
                      "/tmp/vector_database/lancedb_direct",
                     "--stop-list",
                     "fedhealth_mlm_data/austen_manual_stop_list.txt",
-                    "--positive-words",
-                    "fedhealth_mlm_data/positive-words.txt",
+                    "--target-positive",
+                    "fedhealth_mlm_data/positive-words-dev.txt",
+                    "--known-positive",
+                    "fedhealth_mlm_data/positive-words-dev.txt",
                 "--metric", "cosine"]
         },
         
@@ -87,7 +89,7 @@
                     "--stop-list",
                     "fedhealth_mlm_data/austen_manual_stop_list.txt",
                     "--positive-words",
-                    "fedhealth_mlm_data/positive-words.txt",
+                    "fedhealth_mlm_data/positive-words-train.txt",
                 "--output-dir", "/tmp/vector_database"]
         },
 
