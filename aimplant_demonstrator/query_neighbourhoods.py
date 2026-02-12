@@ -47,8 +47,18 @@ def main():
                              "database, there should be a JSON file in the parent directory with the same base "
                              "name as the directory with the `.json` suffix"),
                         type=Path)
-    parser.add_argument('--positive-words', help="If supplied, will be used to tag words as \"positive\", which can be used downstreams", type=Path)
-    parser.add_argument('--stop-list', help="If supplied, will be used as a filter and skip any words in this list", type=Path)
+    parser.add_argument('--target-positive', 
+                        help=("If supplied, will be used to tag words as "
+                              "\"target positive\" for the evaluation"), nargs="+",type=Path)
+    parser.add_argument('--known-positive', 
+                        help=("If supplied, will be used to tag words as \"known positive\", "
+                              "which can be used downstreams to filter out in evaluation "
+                              "(these terms are positive in the training data, but should "
+                              "not contribute in any way to the perfomance on the "
+                              "\"target positive\" words)"), nargs="+",type=Path)
+    parser.add_argument('--stop-list', 
+                        help="If supplied, will be used as a filter and skip any words in this list", 
+                        nargs='+',type=Path)
     parser.add_argument('--output_dir',
                         help="Path to directory to save output files",
                         type=Path)
@@ -91,18 +101,28 @@ def main():
     table_name = database_metadata.get('table_name', 'words')
     stop_list = set()
     if args.stop_list is not None:
-        with open(args.stop_list) as fp:
-            stop_list = set(w for line in fp for w in line.strip().lower().split())
+        for stop_list_path in args.stop_list:
+            with open(stop_list_path) as fp:
+                stop_list = stop_list.union(w for line in fp for w in line.strip().lower().split())
     elif 'stop_words' in database_metadata:
         stop_list = set(database_metadata['stop_words'])
         
-    positive_words = set()
-    if args.positive_words is not None:
-        with open(args.positive_words) as fp:
-            positive_words = set(w for line in fp for w in line.strip().lower().split())
+    target_positive_words = set()
+    if args.target_positive is not None:
+        for positive_words_path in args.target_positive:
+            with open(positive_words_path) as fp:
+                target_positive_words = target_positive_words.union(w for line in fp for w in line.strip().lower().split())
     elif 'positive_words' in database_metadata:
-        positive_words = set(database_metadata['positive_words'])
+        target_positive_words = set(database_metadata['positive_words'])
     
+    known_positive_words = set()
+    if args.known_positive is not None:
+        for known_positive_path in args.known_positive:
+            with open(known_positive_path) as fp:
+                known_positive_words = known_positive_words.union(w for line in fp for w in line.strip().lower().split())
+    elif 'known_positive_words' in database_metadata:
+        known_positive_words = set(database_metadata['known_positive_words'])
+
     output_dir = args.vector_database.with_name(f"{args.vector_database.stem}-{args.test_data.stem}-{args.metric}-{args.n_neighbours}-neighbourhoods")
     output_dir.mkdir(parents=True, exist_ok=True)
         # We need to check the model format for the federated training
@@ -120,6 +140,9 @@ def main():
         
     print("Index created.")
     chunk_index = 0
+
+    word_class_mappings = { "negative": 0, "target_positive": 1, "stop_word": 2, "known_positive": 3}
+
     with torch.inference_mode():
         model.eval()
         for i, batch in enumerate(tqdm(dataloader)):
@@ -160,7 +183,15 @@ def main():
                 for (word, word_group) in zip(words, word_groups):
 
                     word = word.lower()
-                    word_class = word in positive_words
+                    if word in stop_list:
+                        word_class = word_class_mappings["stop_word"]
+                    elif word in target_positive_words:
+                        word_class = word_class_mappings["target_positive"]
+                    elif word in known_positive_words:
+                        word_class = word_class_mappings["known_positive"]
+                    else:
+                        word_class = word_class_mappings["negative"]
+                    
                     word_idx = len(all_words)
                     all_words.append((word, word_class))
                     if word not in stop_list:
@@ -173,7 +204,9 @@ def main():
                         if len(query_word_indices) >= args.query_size:
                             neighbourhoods = query_database(table, query_word_indices, query_vectors, all_words, k=args.n_neighbours, metric=args.metric)
                             with open(output_dir / f"neighbour_chunks_{chunk_index:02}.pkl", 'wb') as fp:
-                                pickle.dump(neighbourhoods, fp)
+                                output = {"neighbourhoods": neighbourhoods,
+                                          "class_mapping": word_class_mappings}
+                                pickle.dump(output, fp)
                             chunk_index += 1
                             #print(neighbourhoods)
                             query_word_indices.clear()
