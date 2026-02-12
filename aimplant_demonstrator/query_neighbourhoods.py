@@ -71,7 +71,7 @@ def main():
     parser.add_argument('--n-neighbours', 
                         help="Number of neighbours to retrieve from the vector database for each query word", 
                         type=int, 
-                        default=60)
+                        default=128)
     parser.add_argument('--metric', help="The metric to use for the vector database index", type=str, default='cosine')
     args = parser.parse_args()
     
@@ -134,7 +134,7 @@ def main():
         table.create_index(
             metric=args.metric,
             vector_column_name="vector",
-            replace=True)
+            replace=False)
     except RuntimeError as e:
         print("Index already exists, skipping index creation.")
         
@@ -214,7 +214,9 @@ def main():
                             all_words.clear()
         neighbourhoods = query_database(table, query_word_indices, query_vectors, all_words, k=args.n_neighbours, metric=args.metric)
         with open(output_dir / f"neighbour_chunks_{chunk_index:02}.pkl", 'wb') as fp:
-            pickle.dump(neighbourhoods, fp)
+                                output = {"neighbourhoods": neighbourhoods,
+                                          "class_mapping": word_class_mappings}
+                                pickle.dump(output, fp)
         
 
                     
