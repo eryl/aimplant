@@ -15,6 +15,9 @@ def main():
     parser.add_argument('app_dir', 
                         help="App dir from training (either federated or local)", 
                         type=Path)
+    parser.add_argument('--dev-data', 
+                        help="Path to text file with dev data, if not given, uses the one from config", 
+                        type=Path)
     parser.add_argument('--test-data', 
                         help="Path to text file with test data, if not given, uses the one from config", 
                         type=Path)
@@ -27,6 +30,9 @@ def main():
     test_data_path = config.data_config.test_data
 
     config.training_args.eval_samples = None  # Evaluate on full dev/test set
+    
+    if args.dev_data:
+        dev_data_path = args.dev_data
     if args.test_data:
         test_data_path = args.test_data
 
@@ -66,7 +72,7 @@ def main():
                         indent=2)
 
     if best_model_path is not None:
-        best_model_symlink: Path = output_dir / "best_local_model.pt"
+        best_model_symlink: Path = output_dir / "best_local_model.ckpt"
         best_model_symlink.unlink(missing_ok=True)
         best_model_symlink.symlink_to(best_model_path.absolute())
 

@@ -63,8 +63,8 @@ def main():
 
     with open(output_dir / "analyzed_neighbourhoods.json", 'w') as fp:
         json.dump({"roc_auc_scores": roc_auc_scores,
-                    "best_score": best_score,
-                    "best_hyper_params": best_hyper_params}, fp, indent=2)
+                   "best_score": best_score,
+                   "best_hyper_params": best_hyper_params}, fp, indent=2)
 
     plt.figure()
     for weight_type, scores_dict in roc_auc_scores.items():
@@ -78,6 +78,7 @@ def main():
     
     plt.savefig(output_dir / "roc_auc_vs_neighbours.png")
     plt.show()
+
 
 # def compute_nearest_neighbour_rocauc(query_word_classes, 
 #                                      neighbourhood_classes, 
