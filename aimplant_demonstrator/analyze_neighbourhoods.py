@@ -7,6 +7,7 @@ from collections import Counter, defaultdict
 import numpy as np
 from sklearn.metrics import roc_auc_score, roc_curve
 import matplotlib.pyplot as plt
+from tqdm.auto import tqdm
 
 
 def main():
@@ -22,8 +23,7 @@ def main():
     neighbourhood_distances = []
     query_word_classes = []
     max_neighbours = 0
-    for neighbourhood_file in neighbourhood_files:
-        print(f"Analyzing {neighbourhood_file}...")
+    for neighbourhood_file in tqdm(neighbourhood_files, desc="Processing neighbourhood files"):
         with open(neighbourhood_file, 'rb') as fp:
             neighbourhood_data = pickle.load(fp)
             neighbourhoods = neighbourhood_data["neighbourhoods"]
