@@ -14,7 +14,7 @@ def main():
     parser.add_argument('neighbourhoods', help='The directory containing the neighbourhoods extracted from the vector database. This should be the output directory of the `extract_neighbourhoods` script.', type=Path)
     parser.add_argument('--output-dir', help='The directory to write the analysis results to.', type=Path)
     args = parser.parse_args()
-    neighbourhoods = args.neighbourhoods.glob("*.pkl")
+    neighbourhood_files = args.neighbourhoods.glob("*.pkl")
 
     output_dir = args.output_dir if args.output_dir else args.neighbourhoods / "analysis"
     #  We'll start by extracting all the statistics for the neighbourhoods into ndarrays. We'll work under the assumption that they will fit in memory´
@@ -22,24 +22,28 @@ def main():
     neighbourhood_distances = []
     query_word_classes = []
     max_neighbours = 0
-    for neighbourhood_file in neighbourhoods:
+    for neighbourhood_file in neighbourhood_files:
         print(f"Analyzing {neighbourhood_file}...")
         with open(neighbourhood_file, 'rb') as fp:
             neighbourhood_data = pickle.load(fp)
+            neighbourhoods = neighbourhood_data["neighbourhoods"]
+            class_mappings = neighbourhood_data["class_mapping"]
         #The pickled files contain a list of tuples in the form of 
         # (('query_word', label), [(cossim1, 'neighbour_word1', label1), (cossim2 'neighbour_word2', label2), ...])
         # We'll analyze the sensitivity and specificity for different choices of number of 
         # neighbours and different thresholds on the cosine similarity. We will also 
         # analyze the distribution of the cosine similarities for 
         # the relevant and non-relevant neighbours.
-        n_query_words = len(neighbourhood_data)
-        for (query_word, query_label), neighbours in neighbourhood_data:
-            query_label = 2*query_label - 1
+        skip_lables = (class_mappings['stop_word'], class_mappings['known_positive'])  # We won't include stop words in the analysis, since they are not relevant for the classification task and they have very different neighbourhoods
+        n_query_words = len(neighbourhoods)
+        for (query_word, query_label), neighbours in neighbourhoods:
+            if query_label in skip_lables:
+                continue
+
             max_neighbours = max(max_neighbours, len(neighbours))
             query_neighbour_classes = []
             query_distances = []
             for cossim, neighbour_word, neighbour_label in neighbours:
-                neighbour_label = 2*neighbour_label - 1 # We'll -1, 1 encode the labels
                 query_neighbour_classes.append(neighbour_label)
                 query_distances.append(cossim)
             if query_neighbour_classes: # Stop words will have empty lists, we shouldn't add them
