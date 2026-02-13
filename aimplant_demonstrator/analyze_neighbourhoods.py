@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import pickle
 from collections import Counter, defaultdict
+from hashlib import md5
 
 import numpy as np
 from sklearn.metrics import roc_auc_score, roc_curve
@@ -15,7 +16,7 @@ def main():
     parser.add_argument('neighbourhoods', help='The directory containing the neighbourhoods extracted from the vector database. This should be the output directory of the `extract_neighbourhoods` script.', type=Path)
     parser.add_argument('--output-dir', help='The directory to write the analysis results to.', type=Path)
     args = parser.parse_args()
-    neighbourhood_files = args.neighbourhoods.glob("*.pkl")
+    neighbourhood_files = sorted(args.neighbourhoods.glob("*.pkl"))
 
     output_dir = args.output_dir if args.output_dir else args.neighbourhoods / "analysis"
     #  We'll start by extracting all the statistics for the neighbourhoods into ndarrays. We'll work under the assumption that they will fit in memory´
@@ -23,36 +24,54 @@ def main():
     neighbourhood_distances = []
     query_word_classes = []
     max_neighbours = 0
-    for neighbourhood_file in tqdm(neighbourhood_files, desc="Processing neighbourhood files"):
-        with open(neighbourhood_file, 'rb') as fp:
-            neighbourhood_data = pickle.load(fp)
-            neighbourhoods = neighbourhood_data["neighbourhoods"]
-            class_mappings = neighbourhood_data["class_mapping"]
-        #The pickled files contain a list of tuples in the form of 
-        # (('query_word', label), [(cossim1, 'neighbour_word1', label1), (cossim2 'neighbour_word2', label2), ...])
-        # We'll analyze the sensitivity and specificity for different choices of number of 
-        # neighbours and different thresholds on the cosine similarity. We will also 
-        # analyze the distribution of the cosine similarities for 
-        # the relevant and non-relevant neighbours.
-        skip_lables = (class_mappings['stop_word'], class_mappings['known_positive'])  # We won't include stop words in the analysis, since they are not relevant for the classification task and they have very different neighbourhoods
-        n_query_words = len(neighbourhoods)
-        for (query_word, query_label), neighbours in neighbourhoods:
-            if query_label in skip_lables:
-                continue
+    neighbourhood_hash = md5()
+    for neighbourhood_file in neighbourhood_files:
+        neighbourhood_hash.update(str(neighbourhood_file).encode('utf-8'))
+    cache_files = f"neigbourhood_analysis_{neighbourhood_hash.hexdigest()}.pkl"
+    if (output_dir / cache_files).exists():
+        with open(output_dir / cache_files, 'rb') as fp:
+            cache_data = pickle.load(fp)
+            neighbourhood_classes = cache_data["neighbourhood_classes"]
+            neighbourhood_distances = cache_data["neighbourhood_distances"]
+            query_word_classes = cache_data["query_word_classes"]
+            max_neighbours = cache_data["max_neighbours"]
+    else:
+        for neighbourhood_file in tqdm(neighbourhood_files, desc="Processing neighbourhood files"):
+            with open(neighbourhood_file, 'rb') as fp:
+                neighbourhood_data = pickle.load(fp)
+                neighbourhoods = neighbourhood_data["neighbourhoods"]
+                class_mappings = neighbourhood_data["class_mapping"]
+            #The pickled files contain a list of tuples in the form of 
+            # (('query_word', label), [(cossim1, 'neighbour_word1', label1), (cossim2 'neighbour_word2', label2), ...])
+            # We'll analyze the sensitivity and specificity for different choices of number of 
+            # neighbours and different thresholds on the cosine similarity. We will also 
+            # analyze the distribution of the cosine similarities for 
+            # the relevant and non-relevant neighbours.
+            skip_lables = (class_mappings['stop_word'], class_mappings['known_positive'])  # We won't include stop words in the analysis, since they are not relevant for the classification task and they have very different neighbourhoods
+            n_query_words = len(neighbourhoods)
+            for (query_word, query_label), neighbours in neighbourhoods:
+                if query_label in skip_lables:
+                    continue
 
-            max_neighbours = max(max_neighbours, len(neighbours))
-            query_neighbour_classes = []
-            query_distances = []
-            for cossim, neighbour_word, neighbour_label in neighbours:
-                query_neighbour_classes.append(neighbour_label)
-                query_distances.append(cossim)
-            if query_neighbour_classes: # Stop words will have empty lists, we shouldn't add them
-                query_word_classes.append(query_label)
-                neighbourhood_classes.append(query_neighbour_classes)
-                neighbourhood_distances.append(query_distances)
-    neighbourhood_classes = np.array(neighbourhood_classes, dtype=np.int8)
-    neighbourhood_distances = np.array(neighbourhood_distances)
-    query_word_classes = np.array(query_word_classes, dtype=np.int8)
+                max_neighbours = max(max_neighbours, len(neighbours))
+                query_neighbour_classes = []
+                query_distances = []
+                for cossim, neighbour_word, neighbour_label in neighbours:
+                    query_neighbour_classes.append(neighbour_label)
+                    query_distances.append(cossim)
+                if query_neighbour_classes: # Stop words will have empty lists, we shouldn't add them
+                    query_word_classes.append(query_label)
+                    neighbourhood_classes.append(query_neighbour_classes)
+                    neighbourhood_distances.append(query_distances)
+        neighbourhood_classes = np.array(neighbourhood_classes, dtype=np.int8)
+        neighbourhood_distances = np.array(neighbourhood_distances)
+        query_word_classes = np.array(query_word_classes, dtype=np.int8)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        with open(output_dir / cache_files, 'wb') as fp:
+            pickle.dump({"neighbourhood_classes": neighbourhood_classes,
+                         "neighbourhood_distances": neighbourhood_distances,
+                         "query_word_classes": query_word_classes,
+                         "max_neighbours": max_neighbours}, fp)
 
     # We'll do a sweep on the number of neighbours and the cosine similarity threshold to 
     # analyze the sensitivity and specificity of the neighbourhoods.
@@ -63,7 +82,7 @@ def main():
                                                                neighbourhood_distances, 
                                                                n_neighbours, weighting_scheme=['inverse', 'exponential'])
     
-    output_dir.mkdir(parents=True, exist_ok=True)
+    
 
     with open(output_dir / "analyzed_neighbourhoods.json", 'w') as fp:
         json.dump({"roc_auc_scores": roc_auc_scores,
