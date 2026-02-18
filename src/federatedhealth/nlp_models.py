@@ -564,6 +564,19 @@ class XLMRobertaModel(torch.nn.Module):
             perplexity = float("inf")
         return test_loss, perplexity
 
+    def single_forward(self, input_batch: list[str], return_input_batch=False):
+        # This is a helper function that can be used to do a single forward pass with the model, for example for the interactive query. It expects a list of strings as input and will return the model outputs.
+        input_batch = {"text": input_batch}
+        tokenized = tokenize_function(input_batch, self.tokenizer, text_column_name='text', return_offsets_mapping=True, return_special_tokens_mask=True)
+        input_batch.update(tokenized)
+        grouped = group_subwords(input_batch, self.tokenizer, text_column_name='text')
+        input_batch.update(grouped)
+        input_ids = torch.tensor(input_batch["input_ids"], device=self.model.device)
+        attention_mask = torch.tensor(input_batch["attention_mask"], device=self.model.device)
+        outputs = self.model(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=True)
+        if return_input_batch:
+            return outputs, input_batch
+        return outputs
         
 
 def load_model_from_checkpoint(model_path):
