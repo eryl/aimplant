@@ -40,7 +40,7 @@ def main():
                              "database, there should be a JSON file in the parent directory with the same base "
                              "name as the directory with the `.json` suffix"),
                         type=Path)
-    parser.add_argument('--batch-size', help="Size of batches.", type=int, default=2)
+    parser.add_argument('--batch-size', help="Size of batches.", type=int, default=8192)
     parser.add_argument('--query_size', 
                         help="The data is collected in chunks before being written to disk. This decides the size of those chunks", 
                         type=int, 
@@ -108,6 +108,21 @@ def main():
                 target_table = db.create_table(target_table_name, schema=schema, mode='overwrite')
             table.add(records, on_bad_vectors='drop')
             records = []
+    if target_table is None:
+        v = records[0]["vector"]
+        vector_dimension = len(v)
+        vector_type = pa.list_(pa.float16(), vector_dimension)
+        target_table_name = f"{table_name}_aggregated"
+        schema = pa.schema(
+                        [
+                            pa.field('id', pa.int64()),
+                            pa.field('label', pa.int8()),
+                            pa.field('word', pa.string()),
+                            pa.field('vector', vector_type)
+                        ]
+                    )
+        target_table = db.create_table(target_table_name, schema=schema, mode='overwrite')
+    table.add(records, on_bad_vectors='drop')
             
         
 
