@@ -162,16 +162,15 @@ elif 'stop_words' in database_metadata:
 if not args.dummy_table:
     db = lancedb.connect(args.vector_database)
     table = db.open_table(table_name)
-    print("Creating index...")
     try:
         table.create_index(
             metric=args.metric,
             vector_column_name="vector",
             replace=False)
     except RuntimeError as e:
-        print("Index already exists, skipping index creation.")
+        #print("Index already exists, skipping index creation.")
+        pass 
         
-    print("Index created.")
 else:
     table = DummyTable()
 
@@ -182,7 +181,6 @@ with torch.inference_mode():
     query_result = make_query(table, word_indices, word_vectors, all_words, n_neighbours)
     query_result = query_result[0] # The above functions works on batches, but we have a single example
     for word, neighbours in query_result:
-        
         st.write(word)
         if neighbours:
             df = st.dataframe([{"Neighbour": neighbour_word, "Distance": distance, "Class": word_class} for distance, neighbour_word, word_class in neighbours])
