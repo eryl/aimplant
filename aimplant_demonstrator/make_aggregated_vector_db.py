@@ -62,7 +62,7 @@ def main():
     records = dict()
     n_batches = int(math.ceil(len(table) / args.batch_size))
     vector_dimension = None
-    for batch in tqdm(table.to_lance().to_batches(batch_size=args.batch_size, batch_readahead=4), total=n_batches):
+    for batch in tqdm(table.search().to_batches(batch_size=args.batch_size), total=n_batches):
         df = batch.to_pandas() # this helps conversion to numpy arrays and preserves the precision of the vectors
         for record in df.to_dict(orient="records"):
             word = record["word"]
