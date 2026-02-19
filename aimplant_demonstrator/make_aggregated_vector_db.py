@@ -33,6 +33,7 @@ def collate_batch(batch, tokenizer):
     collated.update(padded)
     return collated
 
+
 def main():
     parser = argparse.ArgumentParser(description="Create new table in the database with the aggregated vectors from the existing table.")
     parser.add_argument('vector_database',
@@ -68,11 +69,12 @@ def main():
     
     target_table = None
     records = []
-    for i, w in enumerate(tqdm(sorted(all_words.keys()))):
+    for i, w in enumerate(tqdm(reversed(sorted(all_words.keys())), total=len(all_words))):
         vector = None
         label = None
         n_vectors = 0
-        for batch in table.search().where(f'word == "{w}"').select(["vector", "label"]).to_batches():
+        #safe_w = json.dumps(w, ensure_ascii=False)  # This will add quotes around the word and escape any special characters, making it safe for the query
+        for batch in table.search().where(f'word = \'{w}\'').select(["vector", "label"]).to_batches():
             df_vectors = batch.to_pandas()  # This preserves the precision of the vectors
             for row in df_vectors.to_dict(orient="records"):
                 v = row["vector"]
@@ -89,8 +91,9 @@ def main():
                 else:
                     vector += np.array(v)
                     n_vectors += 1
-        record = {"id": i, "word": w, "vector": (vector/n_vectors).tolist(), "label": int(label)}
-        records.append(record)
+        if vector is not None:
+            record = {"id": i, "word": w, "vector": (vector/n_vectors).tolist(), "label": int(label)}
+            records.append(record)
         if len(records) >= args.batch_size:
             if target_table is None:
                 v = records[0]["vector"]
