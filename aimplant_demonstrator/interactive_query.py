@@ -123,6 +123,7 @@ def main():
                         help="Number of neighbours to retrieve from the vector database for each query word", 
                         type=int, 
                         default=8)
+    parser.add_argument('--table-name', help="Name of the table in the vector database to query", type=str, default='words')
     parser.add_argument('--metric', help="The metric to use for the vector database index", type=str, default='cosine')
     parser.add_argument('--dummy-table', help=("If supplied, will not connect to the "
                         "vector database and will use a dummy table which returns no results. "
@@ -144,6 +145,9 @@ def main():
     aggregation = database_metadata['aggregation']
     layers = [int(l) for l in database_metadata['layers']]
     table_name = database_metadata.get('table_name', 'words')
+    if args.table_name is not None:
+        table_name = args.table_name
+        
     stop_list = set()
     if args.stop_list is not None:
         for stop_list_path in args.stop_list:

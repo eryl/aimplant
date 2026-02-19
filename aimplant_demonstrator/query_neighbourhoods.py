@@ -47,6 +47,7 @@ def main():
                              "database, there should be a JSON file in the parent directory with the same base "
                              "name as the directory with the `.json` suffix"),
                         type=Path)
+    parser.add_argument('--table-name', help="Name of the table in the vector database to query", type=str, default='words')
     parser.add_argument('--target-positive', 
                         help=("If supplied, will be used to tag words as "
                               "\"target positive\" for the evaluation"), nargs="+",type=Path)
@@ -99,6 +100,8 @@ def main():
     aggregation = database_metadata['aggregation']
     layers = [int(l) for l in database_metadata['layers']]
     table_name = database_metadata.get('table_name', 'words')
+    if args.table_name is not None:
+        table_name = args.table_name
     stop_list = set()
     if args.stop_list is not None:
         for stop_list_path in args.stop_list:
@@ -123,7 +126,7 @@ def main():
     elif 'known_positive_words' in database_metadata:
         known_positive_words = set(database_metadata['known_positive_words'])
 
-    output_dir = args.vector_database.with_name(f"{args.vector_database.stem}-{args.test_data.stem}-{args.metric}-{args.n_neighbours}-neighbourhoods")
+    output_dir = args.vector_database.with_name(f"{args.vector_database.stem}-{table_name}--{args.test_data.stem}-{args.metric}-{args.n_neighbours}-neighbourhoods")
     output_dir.mkdir(parents=True, exist_ok=True)
         # We need to check the model format for the federated training
     
@@ -214,12 +217,11 @@ def main():
                             all_words.clear()
         neighbourhoods = query_database(table, query_word_indices, query_vectors, all_words, k=args.n_neighbours, metric=args.metric)
         with open(output_dir / f"neighbour_chunks_{chunk_index:02}.pkl", 'wb') as fp:
-                                output = {"neighbourhoods": neighbourhoods,
-                                          "class_mapping": word_class_mappings}
-                                pickle.dump(output, fp)
-        
+            output = {"neighbourhoods": neighbourhoods,
+                        "class_mapping": word_class_mappings}
+            pickle.dump(output, fp)
 
-                    
+
 def query_database(table, query_word_indices, query_vectors, all_words, k=20, metric='cosine'):
     batches = table.search(query_vectors).limit(k).distance_type(metric).to_batches()
     # We will produce a list of all words like the one in `all_words`, but populate the

@@ -130,6 +130,7 @@ parser.add_argument('--n-neighbours',
                     type=int, 
                     default=8)
 parser.add_argument('--metric', help="The metric to use for the vector database index", type=str, default='cosine')
+parser.add_argument('--table-name', help="Name of the table in the vector database to query", type=str, default='words')
 parser.add_argument('--dummy-table', help=("If supplied, will not connect to the "
                     "vector database and will use a dummy table which returns no results. "
                     "Useful for testing the rest of the pipeline without needing to set up "
@@ -138,7 +139,8 @@ args = parser.parse_args()
 
 config = load_config()
 config.training_args.eval_samples = None  # Evaluate on full dev/test set
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 
 model = load_model_from_checkpoint(args.model_path)
 model.to(device)
@@ -149,7 +151,11 @@ with open(database_metadata_path) as fp:
     database_metadata = json.load(fp)
 aggregation = database_metadata['aggregation']
 layers = [int(l) for l in database_metadata['layers']]
+
 table_name = database_metadata.get('table_name', 'words')
+if args.table_name is not None:
+    table_name = args.table_name
+
 stop_list = set()
 if args.stop_list is not None:
     for stop_list_path in args.stop_list:
@@ -177,14 +183,15 @@ else:
 with torch.inference_mode():
     n_neighbours = st.number_input("Number of neighbours to retrieve from the vector database for each query word", min_value=1, value=args.n_neighbours)
     query_input = st.text_area("Enter a query", key="query_input")
-    all_words, word_indices, word_vectors = compute_embeddings(model, query_input, layers=layers, aggregation=aggregation, stop_list=stop_list)
-    query_result = make_query(table, word_indices, word_vectors, all_words, n_neighbours)
-    query_result = query_result[0] # The above functions works on batches, but we have a single example
-    for word, neighbours in query_result:
-        st.write(word)
-        if neighbours:
-            df = st.dataframe([{"Neighbour": neighbour_word, "Distance": distance, "Class": word_class} for distance, neighbour_word, word_class in neighbours])
-        
+    if len(query_input.split()) > 1:
+        all_words, word_indices, word_vectors = compute_embeddings(model, query_input, layers=layers, aggregation=aggregation, stop_list=stop_list)
+        query_result = make_query(table, word_indices, word_vectors, all_words, n_neighbours)
+        query_result = query_result[0] # The above functions works on batches, but we have a single example
+        for word, neighbours in query_result:
+            st.write(word)
+            if neighbours:
+                df = st.dataframe([{"Neighbour": neighbour_word, "Distance": distance, "Class": word_class} for distance, neighbour_word, word_class in neighbours])
+            
         
     # while True:
     #     query = input("Enter a query (or '/quit' to exit, '/help' for help): ")
