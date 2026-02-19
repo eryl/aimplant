@@ -58,11 +58,6 @@ def main():
     
     db = lancedb.connect(args.vector_database)
     table = db.open_table(table_name)
-    print("Creating index...")
-    try:
-        table.create_scalar_index("word")
-    except RuntimeError as e:
-        print("Index already exists, skipping index creation.")
 
     records = dict()
     n_batches = int(math.ceil(len(table) / args.batch_size))
