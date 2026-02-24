@@ -18,6 +18,7 @@ def main():
     parser.add_argument('neighbourhoods', help='The directory containing the neighbourhoods extracted from the vector database. This should be the output directory of the `extract_neighbourhoods` script.', type=Path)
     parser.add_argument('--output-dir', help='The directory to write the analysis results to.', type=Path)
     parser.add_argument('--num-workers', help='The number of workers to use for processing the neighbourhoods.', type=int, default=16)
+    parser.add_argument('--skip-cache', help='Whether to use cached results if they exist. If not set, will always recompute the analysis.', action='store_true')
     args = parser.parse_args()
     neighbourhood_files = sorted(args.neighbourhoods.glob("*.pkl"))
 
@@ -28,44 +29,44 @@ def main():
     for neighbourhood_file in neighbourhood_files:
         neighbourhood_hash.update(str(neighbourhood_file).encode('utf-8'))
     cache_files = f"neigbourhood_analysis_{neighbourhood_hash.hexdigest()}.pkl"
-    if (output_dir / cache_files).exists():
+    if  (output_dir / cache_files).exists() and not args.skip_cache:
         with open(output_dir / cache_files, 'rb') as fp:
             cache_data = pickle.load(fp)
-            neighbourhood_classes = cache_data["neighbourhood_classes"]
-            neighbourhood_distances = cache_data["neighbourhood_distances"]
+            query_votes = cache_data["votes"]
             query_word_classes = cache_data["query_word_classes"]
-            max_neighbours = cache_data["max_neighbours"]
     else:
-        neighbourhood_classes = []
-        neighbourhood_distances = []
+        #neighbourhood_classes = []
+        #neighbourhood_distances = []
         query_word_classes = []
         max_neighbours = 0
+        query_votes = defaultdict(lambda: defaultdict(list))
 
         with multiprocessing.Pool(args.num_workers) as pool:
             for partial_results in tqdm(pool.imap_unordered(get_arrays_for_file, neighbourhood_files), total=len(neighbourhood_files), desc="Processing neighbourhood files"):
-                neighbourhood_classes.append(partial_results["neighbourhood_classes"])
-                neighbourhood_distances.append(partial_results["neighbourhood_distances"])
+                #neighbourhood_classes.append(partial_results["neighbourhood_classes"])
+                #neighbourhood_distances.append(partial_results["neighbourhood_distances"])
                 query_word_classes.append(partial_results["query_word_classes"])
-                max_neighbours = max(max_neighbours, partial_results["max_neighbours"])
-        neighbourhood_classes = np.concatenate(neighbourhood_classes, axis=0)
-        neighbourhood_distances = np.concatenate(neighbourhood_distances, axis=0)
+                #max_neighbours = max(max_neighbours, partial_results["max_neighbours"])
+                for (weighting_function, n_neighbours), votes_value in partial_results["votes"].items():
+                    query_votes[weighting_function][n_neighbours].append(votes_value)
+
+        #neighbourhood_classes = np.concatenate(neighbourhood_classes, axis=0)
+        #neighbourhood_distances = np.concatenate(neighbourhood_distances, axis=0)
         query_word_classes = np.concatenate(query_word_classes, axis=0)
+        query_votes = {weighting_function: {n_neighbours: np.concatenate(votes_list, axis=0) 
+                                            for n_neighbours, votes_list in n_neighbours_dict.items()}
+                                            for weighting_function, n_neighbours_dict in query_votes.items()}
 
         output_dir.mkdir(parents=True, exist_ok=True)
         with open(output_dir / cache_files, 'wb') as fp:
-            pickle.dump({"neighbourhood_classes": neighbourhood_classes,
-                         "neighbourhood_distances": neighbourhood_distances,
+            pickle.dump({"votes": query_votes,
                          "query_word_classes": query_word_classes,
-                         "max_neighbours": max_neighbours}, fp)
+                         }, fp)
 
     # We'll do a sweep on the number of neighbours and the cosine similarity threshold to 
     # analyze the sensitivity and specificity of the neighbourhoods.
-    n_neighbours = list(range(1, max_neighbours+1))  # We'll use these as indexing ranges, if we don't add by 1 we'll not include the max number of neighbours
     #roc_auc_scores = compute_nearest_neighbour_rocauc(query_word_classes, neighbourhood_classes, n_neighbours)
-    roc_auc_scores, best_score, best_hyper_params = compute_weighted_nearest_neighbour_rocauc(query_word_classes, 
-                                                               neighbourhood_classes, 
-                                                               neighbourhood_distances, 
-                                                               n_neighbours, weighting_scheme=['inverse', 'exponential'])
+    roc_auc_scores, best_score, best_hyper_params = compute_roc_auc_scores(query_word_classes, query_votes)
     
     
 
@@ -110,6 +111,29 @@ def main():
 #             best_hyper_params = n
 #     return roc_scores_per_neighbour
 
+def compute_roc_auc_scores(query_word_classes, query_votes):
+    roc_auc_scores = {}
+    best_score = float('-inf')
+    best_hyper_params = None
+    
+    for weight_type, votes_dict in query_votes.items():
+        roc_auc_scores[weight_type] = {}
+        for n_neighbours, votes in votes_dict.items():
+            # Compute ROC AUC score for this set of votes
+            fpr, tpr, thresholds = roc_curve(query_word_classes, votes)
+            roc_auc = np.trapezoid(tpr, fpr)
+            # Figure out which threshold gives us the best Youden's J statistic (sensitivity + specificity - 1)
+            # Since fpr is 1 - specificity and tpr is sensitivity, Youden's J can be calculated as tpr - fpr
+            youdens_j = tpr - fpr
+            best_threshold_index = np.argmax(youdens_j)
+            best_threshold = thresholds[best_threshold_index]
+            roc_auc_scores[weight_type][n_neighbours] = (roc_auc, best_threshold)
+            if roc_auc > best_score:
+                best_score = roc_auc
+                best_hyper_params = {"neighbours": n_neighbours, "weight_type": weight_type}
+    return roc_auc_scores, best_score, best_hyper_params
+
+
 def get_arrays_for_file(neighbourhood_file):
     neighbourhood_classes = []
     neighbourhood_distances = []
@@ -146,18 +170,24 @@ def get_arrays_for_file(neighbourhood_file):
     neighbourhood_classes = np.array(neighbourhood_classes, dtype=np.int8)
     neighbourhood_distances = np.array(neighbourhood_distances)
     query_word_classes = np.array(query_word_classes, dtype=np.int8)
-    return {"neighbourhood_classes": neighbourhood_classes,
-            "neighbourhood_distances": neighbourhood_distances,
-            "query_word_classes": query_word_classes,
-            "max_neighbours": max_neighbours}
 
+    n_neighbours = list(range(1, max_neighbours+1))  # We'll use these as indexing ranges, if we don't add by 1 we'll not include the max number of neighbours
+    votes = get_votes(neighbourhood_classes, neighbourhood_distances, n_neighbours)
 
-def get_mean_class(query_word_classes, neighbourhood_classes, neighbourhood_distances, n_neighbours, weight_type='inverse'):
-    neighbour_weights = weighting_function(neighbourhood_distances, weight_type=weight_type)  # This should give us an array of the same shape as neighbourhood_distances with the weights for each neighbour
-    closest_neighbours = neighbour_weights[:, :n_neighbours]
-    weighted_neighbour_classes = closest_neighbours * neighbourhood_classes[:, :n_neighbours]
-    mean_class = np.mean(weighted_neighbour_classes, axis=1)
-    return mean_class
+    return {"query_word_classes": query_word_classes,
+            "votes": votes}
+
+def get_votes(neighbourhood_classes, neighbourhood_distances, n_neighbours):
+    votes = {}
+    for weight_type in ['constant', 'inverse', 'exponential']:
+        neighbour_weights = weighting_function(neighbourhood_distances, weight_type=weight_type)  # This should give us an array of the same shape as neighbourhood_distances with the weights for each neighbour
+        for n in n_neighbours:
+            closest_neighbours = neighbour_weights[:, :n]
+            weighted_neighbour_classes = closest_neighbours * neighbourhood_classes[:, :n]
+            summed_class = np.sum(weighted_neighbour_classes, axis=1)
+            votes[(weight_type, n)] = summed_class
+    return votes
+
 
 def compute_weighted_nearest_neighbour_rocauc(query_word_classes, 
                                               neighbourhood_classes, 
@@ -197,6 +227,12 @@ def weighting_function(distances, weight_type='inverse', eps=1e-5):
         return 1 / (distances + eps)  # Adding a small value to avoid division by zero
     elif weight_type == 'exponential':
         return np.exp(-distances)
+    elif weight_type == 'constant':
+        #n_neighbours = distances.shape[1]
+        # This will give equal weight to all neighbours, while only equalling the 
+        # mean in when using all neighbours. If we use a subset of the neighbours, this will give us a weighted mean where the weights sum to 1.
+        return np.ones_like(distances)
+        #return np.full_like(distances, 1.0 / n_neighbours)  
     else:
         raise ValueError(f"Unknown weight type: {weight_type}")
     
