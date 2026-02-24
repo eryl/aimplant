@@ -92,6 +92,10 @@ def main():
                                                 "This can be used to test the rest of the pipeline without "
                                                 "needing to set up a vector database."), action='store_true')
     parser.add_argument('--metric', help="The metric to use for the vector database index", type=str, default='cosine')
+    parser.add_argument('--rebuild-index', help=("Whether to rebuild the index of the vector database. If not set, "
+                                                "will try to use existing index and only build it if it doesn't exist. "
+                                                "This can be used to speed up the process if the index already exists "
+                                                "and is up to date."), action='store_true')
     args = parser.parse_args()
     
     config = load_config()
@@ -156,7 +160,7 @@ def main():
             table.create_index(
                 metric=args.metric,
                 vector_column_name="vector",
-                replace=False)
+                replace=args.rebuild_index)
         except RuntimeError as e:
             print("Index already exists, skipping index creation.")
             
