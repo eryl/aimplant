@@ -44,7 +44,7 @@ def main():
     parser.add_argument('--num-workers', help='The number of workers to use for processing the neighbourhoods.', type=int, default=0)
     parser.add_argument('--recalculate', help='If set, recalculate the votes file HDF5 store', action='store_true')
     parser.add_argument('--eval-metric', help="What metric to use for evaluation", choices=('roc_auc', 'threshold', 'precision', 'recall', 'f1'), default='f1')
-    parser.add_argument('--chunk-size', help="How large chunks of data to write to store", type=int, default=2**10)
+    parser.add_argument('--chunk-size', help="How large chunks of data to write to store", type=int, default=2**16)
     args = parser.parse_args()
     
     
