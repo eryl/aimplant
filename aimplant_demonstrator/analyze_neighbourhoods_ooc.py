@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
 import h5py
 from torch.utils.data import Dataset, DataLoader
+import pandas as pd
 
 class NeighbourHoodDataset(Dataset):
     def __init__(self, neighbourhoods_dir: Path):
@@ -77,18 +78,16 @@ def main():
             record_results(store, query_word_classes, votes, args.chunk_size)
         partial_file.rename(votes_file)
 
-    roc_auc_scores, best_score, best_hyper_params = compute_statistics(votes_file, eval_metric=args.eval_metric)
-
-    with open(output_dir / "analyzed_neighbourhoods.json", 'w') as fp:
-        json.dump({"roc_auc_scores": roc_auc_scores,
-                   "best_score": best_score,
-                   "best_hyper_params": best_hyper_params}, fp, indent=2)
+    metrics_df = compute_statistics(votes_file, eval_metric=args.eval_metric)
+    metrics_file = output_dir / "analyzed_neighbourhoods.csv"
+    metrics_df.to_csv(metrics_file, index=False)
 
     plt.figure()
-    for weight_type, scores_dict in roc_auc_scores.items():
-        neighbours, scores_records = zip(*sorted(scores_dict.items()))
-        scores = [record[args.eval_metric] for record in scores_records]
-        plt.plot(neighbours, scores, label=weight_type)
+    for weight_type, scores_df in metrics_df.groupby('weight_type'):
+        scores_df = scores_df.sort_values('n_neighbours')
+        n_neighbours = scores_df['n_neighbours']
+        score = scores_df[args.eval_metric]
+        plt.plot(n_neighbours, score, label=weight_type)
     plt.xlabel("Number of Neighbours")
     plt.ylabel(f"{args.eval_metric} Score")
     plt.title(f"{args.eval_metric} vs Number of Neighbours")
@@ -170,46 +169,53 @@ def record_results(store: h5py.File, query_word_classes, votes, chunk_size):
 
     return n_remaining, remaining_word_classes, remaining_votes
 
-def compute_statistics(votes_file: Path, eval_metric='f1_score'):
+def compute_statistics(votes_file: Path, eval_metric='f1_score', num_workers=0):
     performance = {}
     best_score = float('-inf')
     best_hyper_params = None
-    
+    work_packages = []
     with h5py.File(votes_file, 'r') as store:
-        query_word_classes = store['query_word_classes'][:]
         weighting_functions = store.attrs['weighting_function']
-        for weight_type in tqdm(weighting_functions, desc='Computing statistics'):
-            performance[weight_type] = {}
+        
+        for weight_type in weighting_functions:
             g = store[weight_type]
             all_n_neighbours = g.attrs['n_neighbours']
-            for n_neighbours in tqdm(all_n_neighbours, desc='Neighbours'):
-                # Compute ROC AUC score for this set of votes
-                votes = g[str(n_neighbours)][:]
-                fpr, tpr, thresholds = roc_curve(query_word_classes, votes)
-                roc_auc = np.trapezoid(tpr, fpr)
-                # Figure out which threshold gives us the best Youden's J statistic (sensitivity + specificity - 1)
-                # Since fpr is 1 - specificity and tpr is sensitivity, Youden's J can be calculated as tpr - fpr
-                youdens_j = tpr - fpr
-                best_threshold_index = np.argmax(youdens_j)
-                best_threshold = thresholds[best_threshold_index]
-                discretized_votes = votes > best_threshold
-                #precision, recall, f1_score, support = precision_recall_fscore_support(query_word_classes, discretized_votes, beta=1)
-                precision = precision_score(query_word_classes, discretized_votes)
-                f1 = f1_score(query_word_classes, discretized_votes)
-                recall = recall_score(query_word_classes, discretized_votes)
-                performance_record = {'roc_auc': roc_auc, 
-                                    'threshold': best_threshold, 
-                                    'precision': precision, 
-                                    'recall': recall, 
-                                    'f1': f1}
-                                    
-                performance[weight_type][int(n_neighbours)] = performance_record
+            for n_neighbours in all_n_neighbours:
+                work_package = (votes_file, weight_type, n_neighbours)
+                work_packages.append(work_package)
+    if num_workers > 1:
+        with multiprocessing.Pool(num_workers) as pool:
+            records = list(tqdm(pool.imap_unordered(statistics_worker, work_packages), total=len(work_packages)))
+    else:
+        records = [statistics_worker(work_package) for work_package in tqdm(work_packages)]
+    df = pd.DataFrame.from_records(records)
+    return df
 
-                if performance_record[eval_metric] > best_score:
-                    best_score = roc_auc
-                    best_hyper_params = {"neighbours": int(n_neighbours), "weight_type": weight_type}
-    return performance, best_score, best_hyper_params
-
+def statistics_worker(work_package):
+    store_file, weight_type, n_neighbours = work_package
+    with h5py.File(store_file) as store:
+        query_word_classes = store['query_word_classes'][:]
+        votes = store[weight_type][str(n_neighbours)][:]
+        fpr, tpr, thresholds = roc_curve(query_word_classes, votes)
+        roc_auc = np.trapezoid(tpr, fpr)
+        # Figure out which threshold gives us the best Youden's J statistic (sensitivity + specificity - 1)
+        # Since fpr is 1 - specificity and tpr is sensitivity, Youden's J can be calculated as tpr - fpr
+        youdens_j = tpr - fpr
+        best_threshold_index = np.argmax(youdens_j)
+        best_threshold = thresholds[best_threshold_index]
+        discretized_votes = votes > best_threshold
+        #precision, recall, f1_score, support = precision_recall_fscore_support(query_word_classes, discretized_votes, beta=1)
+        precision = precision_score(query_word_classes, discretized_votes)
+        f1 = f1_score(query_word_classes, discretized_votes)
+        recall = recall_score(query_word_classes, discretized_votes)
+        performance_record = {'weight_type': weight_type,
+                              'n_neighbours': n_neighbours,
+                                'roc_auc': roc_auc, 
+                                'threshold': best_threshold, 
+                                'precision': precision, 
+                                'recall': recall, 
+                                'f1': f1}
+        return performance_record
 
 def get_arrays_for_file(neighbourhood_file):
     neighbourhood_classes = []
