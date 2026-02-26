@@ -8,7 +8,7 @@ import multiprocessing
 #import multiprocessing.dummy as multiprocessing  # Use threads instead of processes to avoid pickling issues, since the function is not CPU-bound
 
 import numpy as np
-from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_fscore_support, precision_score, recall_score, f1_score
+from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_fscore_support, precision_score, recall_score, f1_score, precision_recall_curve, average_precision_score
 import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
 import h5py
@@ -38,13 +38,15 @@ class NeighbourHoodDataset(Dataset):
 def no_tensor_collator(batch):
     return batch
 
+EVAL_METRICS = ('roc_auc', 'precision', 'recall', 'f1')
+
 def main():
     parser = argparse.ArgumentParser(description="Analyze the neighbourhoods extracted from a vector database for a given test dataset.")
     parser.add_argument('neighbourhoods', help='The directory containing the neighbourhoods extracted from the vector database. This should be the output directory of the `extract_neighbourhoods` script.', type=Path)
     parser.add_argument('--output-dir', help='The directory to write the analysis results to.', type=Path)
     parser.add_argument('--num-workers', help='The number of workers to use for processing the neighbourhoods.', type=int, default=0)
     parser.add_argument('--recalculate', help='If set, recalculate the votes file HDF5 store', action='store_true')
-    parser.add_argument('--eval-metric', help="What metric to use for evaluation", choices=('roc_auc', 'threshold', 'precision', 'recall', 'f1'), default='f1')
+    parser.add_argument('--threshold-metric', help="What metric to use for setting the threshold", choices=('f1', 'ba'), default='f1')
     parser.add_argument('--chunk-size', help="How large chunks of data to write to store", type=int, default=2**16)
     args = parser.parse_args()
     
@@ -78,23 +80,28 @@ def main():
             record_results(store, query_word_classes, votes, args.chunk_size)
         partial_file.rename(votes_file)
 
-    metrics_df = compute_statistics(votes_file, eval_metric=args.eval_metric)
     metrics_file = output_dir / "analyzed_neighbourhoods.csv"
-    metrics_df.to_csv(metrics_file, index=False)
+    if not metrics_file.exists() or args.recalculate:
+        metrics_df = compute_statistics(votes_file, num_workers=args.num_workers)
+        metrics_df.to_csv(metrics_file, index=False)
+    else:
+        metrics_df = pd.read_csv(metrics_file)
 
-    plt.figure()
-    for weight_type, scores_df in metrics_df.groupby('weight_type'):
-        scores_df = scores_df.sort_values('n_neighbours')
-        n_neighbours = scores_df['n_neighbours']
-        score = scores_df[args.eval_metric]
-        plt.plot(n_neighbours, score, label=weight_type)
-    plt.xlabel("Number of Neighbours")
-    plt.ylabel(f"{args.eval_metric} Score")
-    plt.title(f"{args.eval_metric} vs Number of Neighbours")
-    plt.legend()
-    
-    plt.savefig(output_dir / f"{args.eval_metric}_vs_neighbours.png")
-    plt.show()
+    for eval_metric in EVAL_METRICS:
+        for threshold_on, threshold_df in metrics_df.groupby('threshold_on'):
+            plt.figure()
+            for weight_type, scores_df in threshold_df.groupby('weight_type'):
+                scores_df = scores_df.sort_values('n_neighbours')
+                n_neighbours = scores_df['n_neighbours']
+                score = scores_df[eval_metric]
+                plt.plot(n_neighbours, score, label=weight_type)
+            plt.xlabel("Number of Neighbours")
+            plt.ylabel(f"{eval_metric} Score")
+            plt.title(f"{eval_metric} vs Number of Neighbours (thresholded on {threshold_on})")
+            plt.legend()
+            
+            plt.savefig(output_dir / f"{threshold_on}_{eval_metric}_vs_neighbours.png")
+            plt.show()
 
 def record_results(store: h5py.File, query_word_classes, votes, chunk_size):
     # First we prepare the data by concatenating all arrays
@@ -169,10 +176,7 @@ def record_results(store: h5py.File, query_word_classes, votes, chunk_size):
 
     return n_remaining, remaining_word_classes, remaining_votes
 
-def compute_statistics(votes_file: Path, eval_metric='f1_score', num_workers=0):
-    performance = {}
-    best_score = float('-inf')
-    best_hyper_params = None
+def compute_statistics(votes_file: Path, num_workers=0):
     work_packages = []
     with h5py.File(votes_file, 'r') as store:
         weighting_functions = store.attrs['weighting_function']
@@ -188,34 +192,65 @@ def compute_statistics(votes_file: Path, eval_metric='f1_score', num_workers=0):
             records = list(tqdm(pool.imap_unordered(statistics_worker, work_packages), total=len(work_packages)))
     else:
         records = [statistics_worker(work_package) for work_package in tqdm(work_packages)]
-    df = pd.DataFrame.from_records(records)
+    # The statistics worker returns a list of records, so we flatten this nested structure
+    df = pd.DataFrame.from_records([record for record_pair in records for record in record_pair])
     return df
 
 def statistics_worker(work_package):
     store_file, weight_type, n_neighbours = work_package
+    records = []
     with h5py.File(store_file) as store:
         query_word_classes = store['query_word_classes'][:]
         votes = store[weight_type][str(n_neighbours)][:]
-        fpr, tpr, thresholds = roc_curve(query_word_classes, votes)
+        fpr, tpr, roc_thresholds = roc_curve(query_word_classes, votes)
         roc_auc = np.trapezoid(tpr, fpr)
+        precision_sweep, recall_sweep, prc_thresholds = precision_recall_curve(query_word_classes, votes)
+        ap = -np.sum(np.diff(recall_sweep) * precision_sweep[:-1])
+
         # Figure out which threshold gives us the best Youden's J statistic (sensitivity + specificity - 1)
         # Since fpr is 1 - specificity and tpr is sensitivity, Youden's J can be calculated as tpr - fpr
         youdens_j = tpr - fpr
         best_threshold_index = np.argmax(youdens_j)
-        best_threshold = thresholds[best_threshold_index]
+        best_threshold = roc_thresholds[best_threshold_index]
         discretized_votes = votes > best_threshold
         #precision, recall, f1_score, support = precision_recall_fscore_support(query_word_classes, discretized_votes, beta=1)
         precision = precision_score(query_word_classes, discretized_votes)
         f1 = f1_score(query_word_classes, discretized_votes)
         recall = recall_score(query_word_classes, discretized_votes)
-        performance_record = {'weight_type': weight_type,
-                              'n_neighbours': n_neighbours,
-                                'roc_auc': roc_auc, 
+        performance_record_ba = {'weight_type': weight_type,
+                                'n_neighbours': n_neighbours,
+                                'roc_auc': roc_auc,
+                                'average_precision': ap, 
                                 'threshold': best_threshold, 
                                 'precision': precision, 
                                 'recall': recall, 
-                                'f1': f1}
-        return performance_record
+                                'f1': f1,
+                                'threshold_on': 'ba'}
+        records.append(performance_record_ba)
+        
+        
+        
+        # precision/recall are length = len(thresholds)+1
+        f1_sweep = 2 * precision_sweep[:-1] * recall_sweep[:-1] / (precision_sweep[:-1] + recall_sweep[:-1] + 1e-12)
+        best_threshold_index = np.argmax(f1_sweep)
+        best_threshold = prc_thresholds[best_threshold_index]
+        discretized_votes = votes > best_threshold
+        #precision, recall, f1_score, support = precision_recall_fscore_support(query_word_classes, discretized_votes, beta=1)
+        precision = precision_sweep[best_threshold_index]
+        recall = recall_sweep[best_threshold_index]
+        f1 = f1_sweep[best_threshold_index]
+        performance_record_ba = {'weight_type': weight_type,
+                                'n_neighbours': n_neighbours,
+                                'roc_auc': roc_auc, 
+                                'average_precision': ap, 
+                                'threshold': best_threshold, 
+                                'precision': precision, 
+                                'recall': recall, 
+                                'f1': f1,
+                                'threshold_on': 'f1'}
+        
+        records.append(performance_record_ba)
+    return records
 
 def get_arrays_for_file(neighbourhood_file):
     neighbourhood_classes = []
