@@ -55,6 +55,7 @@ def main():
     #  We'll start by extracting all the statistics for the neighbourhoods into ndarrays. We'll work under the assumption that they will fit in memory´
     
     neighbours_dataset = NeighbourHoodDataset(args.neighbourhoods)
+    output_dir.mkdir(exist_ok=True, parents=True)
     votes_file = output_dir / f"neigbourhood_analysis_{neighbours_dataset.neighbourhood_hash}.h5"
     if args.recalculate or not votes_file.exists():
         partial_file: Path = votes_file.with_suffix('.tmp')
