@@ -1,0 +1,25 @@
+name: aimplant
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  - python=3.12
+  - pytorch
+  - torchvision
+  - torchaudio
+  - numpy
+  - tqdm
+  - datasets
+  - sqlitedict
+  - peft
+  - tensorboard
+  - ca-certificates
+  - openssl
+  - huggingface_hub
+  - certifi
+  - transformers
+  - accelerate
+  - scikit-learn
+  - seaborn
+  - jupyter
+  - h5py
