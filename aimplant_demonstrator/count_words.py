@@ -58,8 +58,8 @@ def compare_word_lists(list1, list2, threshold=0.85):
 
 # Example usage
 if __name__ == "__main__":
-    #words_a = ["color", "colour", "coler", "gray", "grey", "red"]
-    #words_b = ["colour", "color", "gray", "blue", "red", "reed"]
+    #glossary = ["color", "colour", "coler", "gray", "grey", "red"]
+    #word_freqs = ["colour", "color", "gray", "blue", "red", "reed"]
     glossary = '/home/abragam23/fedhealth_data/Glossary_only_known_implants.txt'
     word_freqs = '/home/abragam23/fedhealth_data/word_frequencies.txt'
     # Read words from glossary.txt
