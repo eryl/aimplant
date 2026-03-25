@@ -62,22 +62,23 @@ if __name__ == "__main__":
     #word_freqs = ["colour", "color", "gray", "blue", "red", "reed"]
     glossary = '/home/abragam23/fedhealth_data/Glossary_only_known_implants.txt'
     word_freqs = '/home/abragam23/fedhealth_data/word_frequencies.txt'
+    #glossary = 'glossary.txt'
+    #word_freqs = 'word_freq.txt'
     # Read words from glossary.txt
     with open(glossary, 'r', encoding='utf-8') as f:
         words_a = [line.strip() for line in f if line.strip()]
     
     # Read word_freq.txt and extract words with their frequencies
-    words_b = []
+    words_b = {}
     with open(word_freqs, 'r', encoding='utf-8') as f:
         for line in f:
             parts = line.strip().split()
             if parts:
                 word = parts[0]
-                # Repeat word based on frequency count
                 freq = int(parts[1]) if len(parts) > 1 else 1
-                words_b.extend([word] * freq)
+                words_b[word] = freq
 
-    result = compare_word_lists(words_a, words_b)
+    result = compare_word_lists(words_a, list(words_b.keys()))
     print(f"Glossary - Original: {result['list1_original_count']}, Grouped: {result['list1_grouped_count']}")
-    print(f"Word Frequency List - Original: {result['list2_original_count']}, Grouped: {result['list2_grouped_count']}")
+    print(f"Word Frequency List - Unique: {result['list2_original_count']}, Grouped: {result['list2_grouped_count']}, Total tokens: {sum(words_b.values())}")
     print(f"Common words: {result['common_words']}")
