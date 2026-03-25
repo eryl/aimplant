@@ -1,6 +1,7 @@
 from nltk.metrics import edit_distance
 from nltk.metrics.distance import jaro_winkler_similarity
 from tqdm import tqdm
+from nltk.corpus import stopwords
 
 def compare_word_lists(list1, list2, threshold=0.85):
     """
@@ -59,15 +60,23 @@ def compare_word_lists(list1, list2, threshold=0.85):
 
 # Example usage
 if __name__ == "__main__":
+
     #glossary = ["color", "colour", "coler", "gray", "grey", "red"]
     #word_freqs = ["colour", "color", "gray", "blue", "red", "reed"]
-    glossary = '/home/abragam23/fedhealth_data/Glossary_only_known_implants.txt'
-    word_freqs = '/home/abragam23/fedhealth_data/word_frequencies.txt'
-    #glossary = 'glossary.txt'
-    #word_freqs = 'word_freq.txt'
+    #glossary = '/home/abragam23/fedhealth_data/Glossary_only_known_implants.txt'
+    #word_freqs = '/home/abragam23/fedhealth_data/word_frequencies.txt'
+    #stop_words_file = '/home/abragam23/fedhealth_data/manual_stop_list.txt'
+    glossary = 'glossary.txt'
+    word_freqs = 'word_freq.txt'
+    stop_words_file = 'stop_words.txt'
+    with open(stop_words_file, 'r', encoding='utf-8') as f:
+        stop_words = [line.strip() for line in f if line.strip()]        
+        stop_words = set(stop_words + list(stopwords.words('swedish')))
+        
     # Read words from glossary.txt
     with open(glossary, 'r', encoding='utf-8') as f:
         words_a = [line.strip() for line in f if line.strip()]
+        words_a = [word for word in words_a if word.lower() not in stop_words]
     
     # Read word_freq.txt and extract words with their frequencies
     words_b = {}
@@ -78,6 +87,7 @@ if __name__ == "__main__":
                 word = parts[0]
                 freq = int(parts[1]) if len(parts) > 1 else 1
                 words_b[word] = freq
+    #words_b = {word: freq for word, freq in words_b.items() if word.lower() not in stop_words}
 
     result = compare_word_lists(words_a, list(words_b.keys()))
     print(f"Glossary - Original: {result['list1_original_count']}, Grouped: {result['list1_grouped_count']}")
