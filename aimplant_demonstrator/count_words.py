@@ -1,5 +1,6 @@
 from nltk.metrics import edit_distance
 from nltk.metrics.distance import jaro_winkler_similarity
+from tqdm import tqdm
 
 def compare_word_lists(list1, list2, threshold=0.85):
     """
@@ -19,7 +20,7 @@ def compare_word_lists(list1, list2, threshold=0.85):
         groups = []
         used = set()
         
-        for word in words:
+        for word in tqdm(words, desc="Grouping words"):
             if word in used:
                 continue
             group = [word]
@@ -42,7 +43,7 @@ def compare_word_lists(list1, list2, threshold=0.85):
     
     # Find common grouped words
     common_count = 0
-    for group1 in groups1:
+    for group1 in tqdm(groups1, desc="Finding common words"):
         for group2 in groups2:
             if jaro_winkler_similarity(group1[0], group2[0]) >= threshold:
                 common_count += 1
