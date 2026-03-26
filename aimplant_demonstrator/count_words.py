@@ -45,18 +45,19 @@ def compare_word_lists(list1, list2, threshold=0.85):
     
     # Find common grouped words
     common_count = 0
+    common_words = []
     for group1 in tqdm(groups1, desc="Finding common words"):
         for group2 in groups2:
             if jaro_winkler_similarity(group1[0], group2[0]) >= threshold:
                 common_count += 1
-                common_words.append(ref_word)
+                common_words.append(group1[0])
                 break
     
     return {
         "list1_original_count": len(list1),
-        "list1_grouped_count": len(unique_list1),
+        "list1_grouped_count": len(groups1),
         "list2_original_count": len(list2),
-        "list2_grouped_count": len(unique_list2),
+        "list2_grouped_count": len(groups2),
         "common_words": common_words,
         "common_count": common_count
     }
@@ -64,8 +65,6 @@ def compare_word_lists(list1, list2, threshold=0.85):
 # Example usage
 if __name__ == "__main__":
 
-    #glossary = ["color", "colour", "coler", "gray", "grey", "red"]
-    #word_freqs = ["colour", "color", "gray", "blue", "red", "reed"]
     #glossary = '/home/abragam23/fedhealth_data/Glossary_only_known_implants.txt'
     #word_freqs = '/home/abragam23/fedhealth_data/word_frequencies.txt'
     #stop_words_file = '/home/abragam23/fedhealth_data/manual_stop_list.txt'
@@ -98,8 +97,12 @@ if __name__ == "__main__":
                 if not word or word.lower() == 'term':
                     continue
 
-                # Keep one entry per term for overlap/similarity checks.
-                words_b.append(word)
+                try:
+                    freq = int(row[1]) if len(row) > 1 else 1
+                except ValueError:
+                    freq = 1
+
+                words_b[word] = freq
         else:
             for line in f:
                 parts = line.strip().split()
