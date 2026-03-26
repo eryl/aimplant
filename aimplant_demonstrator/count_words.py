@@ -77,44 +77,23 @@ if __name__ == "__main__":
         
     # Read words from glossary.txt
     with open(glossary, 'r', encoding='utf-8') as f:
-        words_a = [line.strip() for line in f if line.strip()]
-        words_a = [word for word in words_a if word.lower() not in stop_words]
+        glossary_words= [line.strip() for line in f if line.strip()]
+        glossary_words = [word for word in glossary_words if word.lower() not in stop_words]
     
     # Read word_freq.txt and extract words with their frequencies
-    words_b = {}
+    freq_words = {}
     with open(word_freqs, 'r', encoding='utf-8') as f:
-        sample = f.read(2048)
-        f.seek(0)
+        for line in f:
+            parts = line.strip().split()
+            if not parts:
+                continue
 
-        # Parse as CSV when commas are present in the sample, otherwise use whitespace splitting.
-        if ',' in sample:
-            reader = csv.reader(f)
-            for row in reader:
-                if not row:
-                    continue
+            word = parts[0]
+            freq = int(parts[1]) if len(parts) > 1 else 1
+            freq_words[word] = freq
+    #freq_words = {word: freq for word, freq in freq_words.items() if word.lower() not in stop_words}
 
-                word = row[0].strip()
-                if not word or word.lower() == 'term':
-                    continue
-
-                try:
-                    freq = int(row[1]) if len(row) > 1 else 1
-                except ValueError:
-                    freq = 1
-
-                words_b[word] = freq
-        else:
-            for line in f:
-                parts = line.strip().split()
-                if not parts:
-                    continue
-
-                word = parts[0]
-                freq = int(parts[1]) if len(parts) > 1 else 1
-                words_b[word] = freq
-    #words_b = {word: freq for word, freq in words_b.items() if word.lower() not in stop_words}
-
-    result = compare_word_lists(words_a, list(words_b.keys()))
+    result = compare_word_lists(glossary_words, list(freq_words.keys()))
     print(f"Glossary - Original: {result['list1_original_count']}, Grouped: {result['list1_grouped_count']}")
-    print(f"Word Frequency List - Unique: {result['list2_original_count']}, Grouped: {result['list2_grouped_count']}, Total tokens: {sum(words_b.values())}")
+    print(f"Word Frequency List - Unique: {result['list2_original_count']}, Grouped: {result['list2_grouped_count']}, Total tokens: {sum(freq_words.values())}")
     print(f"Common words: {result['common_words']}")
