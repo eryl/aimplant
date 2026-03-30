@@ -44,22 +44,19 @@ def compare_word_lists(list1, list2, threshold=0.85):
     groups2 = group_similar_words(list2, threshold)
     
     # Find common grouped words
-    common_count = 0
     common_words = []
     for group1 in tqdm(groups1, desc="Finding common words"):
         for group2 in groups2:
             if jaro_winkler_similarity(group1[0], group2[0]) >= threshold:
-                common_count += 1
                 common_words.append(group1[0])
                 break
     
     return {
-        "list1_original_count": len(list1),
-        "list1_grouped_count": len(groups1),
-        "list2_original_count": len(list2),
-        "list2_grouped_count": len(groups2),
+        "list1_original": list1,
+        "list1_grouped": groups1,
+        "list2_original": list2,
+        "list2_grouped": groups2,
         "common_words": common_words,
-        "common_count": common_count
     }
 
 # Example usage
@@ -94,6 +91,6 @@ if __name__ == "__main__":
     #freq_words = {word: freq for word, freq in freq_words.items() if word.lower() not in stop_words}
 
     result = compare_word_lists(glossary_words, list(freq_words.keys()))
-    print(f"Glossary - Original: {result['list1_original_count']}, Grouped: {result['list1_grouped_count']}")
-    print(f"Word Frequency List - Unique: {result['list2_original_count']}, Grouped: {result['list2_grouped_count']}, Total tokens: {sum(freq_words.values())}")
-    print(f"Common words: {result['common_words']}")
+    print(f"Glossary - Original: {len(result['list1_original'])}, Grouped: {len(result['list1_grouped'])}")
+    print(f"Word Frequency List - Unique: {len(result['list2_original'])}, Grouped: {len(result['list2_grouped'])}, Total tokens: {sum(freq_words.values())}")
+    print(f"Common words: {len(result['common_words'])}:  {result['common_words']}")
