@@ -155,15 +155,22 @@ def main():
     if not args.dummy_table:
         db = lancedb.connect(args.vector_database)
         table = db.open_table(table_name)
-        print("Creating index...")
+        print("Creating vector index...")
         try:
             table.create_index(
                 metric=args.metric,
                 vector_column_name="vector",
                 replace=args.rebuild_index)
         except RuntimeError as e:
-            print("Index already exists, skipping index creation.")
-            
+            print("Vector index already exists, skipping index creation.")
+        print("Creating scalar index...")
+        try:
+            table.create_scalar_index("label", 
+                                      index_type="BITMAP",
+                                      replace=args.rebuild_index)
+        except RuntimeError as e:
+            print("Scalar index already exists, skipping index creation.")
+        
         print("Index created.")
     else:
         table = DummyTable()
