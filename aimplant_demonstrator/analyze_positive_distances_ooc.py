@@ -62,8 +62,7 @@ def main():
         partial_file: Path = votes_file.with_suffix('.tmp')
         neighbourhood_limit = get_neighbourhood_limit(neighbourhood_files, num_workers=args.num_workers)
         if neighbourhood_limit is None or neighbourhood_limit < 0:
-            raise RuntimeError(f"Could not determine the neighbourhood limit, got {neighbourhood_limit}. 
-                               This means that all neighbourhoods are empty, which is unexpected.")
+            raise RuntimeError(f"Could not determine the neighbourhood limit, got {neighbourhood_limit}. This means that all neighbourhoods are empty, which is unexpected.")
 
         neighbours_dataset = NeighbourHoodDataset(neighbourhood_files, neighbourhood_limit=neighbourhood_limit)
         dataloader = DataLoader(neighbours_dataset, batch_size=1, num_workers=args.num_workers, drop_last=False, collate_fn=no_tensor_collator)
