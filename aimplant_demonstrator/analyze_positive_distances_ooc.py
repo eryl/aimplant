@@ -291,15 +291,15 @@ def statistics_worker(work_package):
     store_file, weight_type, n_neighbours = work_package
     records = []
     with h5py.File(store_file) as store:
-        # Note, since we're using distance to the "positive" examples as the vote,
-        # the query word classes are inverted, since a distance close to 0 means that the
-        # neighbour is likely to be a positive example, while a distance far from 0 means
-        # that the neighbour is likely to be a negative example. We could of course also
-        # invert the distances, but inverting the classes is more straightforward.
-        query_word_classes = 1 - store['query_word_classes'][:]
+        # The sklearn metrics expects the scoring function to be increasing with the probability of being 
+        # a positive example, so if we are using distances we need to invert them to get the votes. We 
+        # also need to make sure that the votes are in the range [0, 1], so we can use them as probabilities. 
+        # We can do this by transforming them with the exponentiated negative of the distance, which will 
+        # give us values in the range (0, 1] that decrease with increasing distance.
+        query_word_classes = store['query_word_classes'][:]
         positive_words = np.sum(store['query_word_classes'][:])
         negative_words = len(query_word_classes) - positive_words
-        votes = store[weight_type][str(n_neighbours)][:]
+        votes = np.exp(-store[weight_type][str(n_neighbours)][:])
         fpr, tpr, roc_thresholds = roc_curve(query_word_classes, votes)
         roc_auc = np.trapezoid(tpr, fpr)
         precision_sweep, recall_sweep, prc_thresholds = precision_recall_curve(query_word_classes, votes)
@@ -445,6 +445,8 @@ def get_min_neighbours_for_file(neighbourhood_file):
         neighbourhood_data = pickle.load(fp)
         neighbourhoods = neighbourhood_data["neighbourhoods"]
         for (query_word, query_label), neighbours in neighbourhoods:
+            # Skip words will have an empty neighbourhood, since they won't contribute to 
+            # the analysis and they would cause issues with stacking the arrays into ndarrays.
             n_neighbours_for_word = len(neighbours)
             if n_neighbours_for_word > 0 and (min_neighbours is None or n_neighbours_for_word < min_neighbours):
                 min_neighbours = n_neighbours_for_word
