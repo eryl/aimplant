@@ -17,14 +17,9 @@ import pandas as pd
 import seaborn as sns
 
 class NeighbourHoodDataset(Dataset):
-    def __init__(self, neighbourhoods_dir: Path):
-        self.neighbourhood_files = sorted(neighbourhoods_dir.glob("*.pkl"))
-        neighbourhood_hash = md5()
-        for neighbourhood_file in tqdm(self.neighbourhood_files):
-            neighbourhood_hash.update(str(neighbourhood_file).encode('utf-8'))
-            
-        self.neighbourhood_hash = neighbourhood_hash.hexdigest()
-    
+    def __init__(self, neighbourhood_files, neighbourhood_limit=None):
+        self.neighbourhood_files = sorted(neighbourhood_files)
+        self.neighbourhood_limit = neighbourhood_limit
         super().__init__()  
     
     def __len__(self):
@@ -32,7 +27,7 @@ class NeighbourHoodDataset(Dataset):
 
     def __getitem__(self, index):
         neighbourhood_file = self.neighbourhood_files[index]
-        neighbourhood = get_arrays_for_file(neighbourhood_file)
+        neighbourhood = get_arrays_for_file(neighbourhood_file, neighbourhood_limit=self.neighbourhood_limit)
         return neighbourhood
 
 
@@ -51,15 +46,22 @@ def main():
     parser.add_argument('--chunk-size', help="How large chunks of data to write to store", type=int, default=2**16)
     args = parser.parse_args()
     
-    
+    neighbourhood_files = sorted(args.neighbourhoods.glob("*.pkl"))
+    neighbourhood_hash = md5()
+    for neighbourhood_file in tqdm(neighbourhood_files):
+        neighbourhood_hash.update(str(neighbourhood_file).encode('utf-8'))
+        
+    neighbourhood_hash = neighbourhood_hash.hexdigest()
     output_dir = args.output_dir if args.output_dir else args.neighbourhoods / "analysis"
     #  We'll start by extracting all the statistics for the neighbourhoods into ndarrays. We'll work under the assumption that they will fit in memory´
     
-    neighbours_dataset = NeighbourHoodDataset(args.neighbourhoods)
+    
     output_dir.mkdir(exist_ok=True, parents=True)
-    votes_file = output_dir / f"neigbourhood_distances_{neighbours_dataset.neighbourhood_hash}.h5"
+    votes_file = output_dir / f"neigbourhood_distances_{neighbourhood_hash}.h5"
     if args.recalculate or not votes_file.exists():
         partial_file: Path = votes_file.with_suffix('.tmp')
+        neighbourhood_limit = get_neighbourhood_limit(neighbourhood_files, num_workers=args.num_workers)
+        neighbours_dataset = NeighbourHoodDataset(neighbourhood_files, neighbourhood_limit=neighbourhood_limit)
         dataloader = DataLoader(neighbours_dataset, batch_size=1, num_workers=args.num_workers, drop_last=False, collate_fn=no_tensor_collator)
         with h5py.File(partial_file, 'w') as store:
             n_words = 0
@@ -286,10 +288,10 @@ def statistics_worker(work_package):
     store_file, weight_type, n_neighbours = work_package
     records = []
     with h5py.File(store_file) as store:
-        # Note, since we're using distance to the "positive" examples as the vote, 
-        # the query word classes are inverted, since a distance close to 0 means that the 
-        # neighbour is likely to be a positive example, while a distance far from 0 means 
-        # that the neighbour is likely to be a negative example. We could of course also 
+        # Note, since we're using distance to the "positive" examples as the vote,
+        # the query word classes are inverted, since a distance close to 0 means that the
+        # neighbour is likely to be a positive example, while a distance far from 0 means
+        # that the neighbour is likely to be a negative example. We could of course also
         # invert the distances, but inverting the classes is more straightforward.
         query_word_classes = 1 - store['query_word_classes'][:]
         votes = store[weight_type][str(n_neighbours)][:]
@@ -343,11 +345,11 @@ def statistics_worker(work_package):
         records.append(performance_record_ba)
     return records
 
-def get_arrays_for_file(neighbourhood_file):
+def get_arrays_for_file(neighbourhood_file, neighbourhood_limit=-1):
     neighbourhood_classes = []
     neighbourhood_distances = []
     query_word_classes = []
-    max_neighbours = None
+    
     with open(neighbourhood_file, 'rb') as fp:
         neighbourhood_data = pickle.load(fp)
         neighbourhoods = neighbourhood_data["neighbourhoods"]
@@ -365,11 +367,6 @@ def get_arrays_for_file(neighbourhood_file):
         if query_label in skip_lables:
             continue
         
-        # We keep track of how many neighbours we can have at max while 
-        # including all query words, in case some words have too few neighbours.
-        if max_neighbours is None or len(neighbours) < max_neighbours:
-            max_neighbours = len(neighbours)
-        
         query_neighbour_classes = []
         query_distances = []
         for cossim, neighbour_word, neighbour_label in neighbours:
@@ -382,8 +379,8 @@ def get_arrays_for_file(neighbourhood_file):
     
     # We slice the neighbourhoods to the max number of neighbours, so that we can stack them into ndarrays.
     try:
-        neighbourhood_classes = np.array([neighbourhood_class[:max_neighbours] for neighbourhood_class in neighbourhood_classes] , dtype=np.int8)
-        neighbourhood_distances = np.array([neighbourhood_distance[:max_neighbours] for neighbourhood_distance in neighbourhood_distances], dtype=np.float32)
+        neighbourhood_classes = np.array([neighbourhood_class[:neighbourhood_limit] for neighbourhood_class in neighbourhood_classes] , dtype=np.int8)
+        neighbourhood_distances = np.array([neighbourhood_distance[:neighbourhood_limit] for neighbourhood_distance in neighbourhood_distances], dtype=np.float32)
     except ValueError as e:
         print(f"Error converting neighbourhood classes or distances to numpy arrays: {e}")
         print(f"Neighbourhood classes: {neighbourhood_classes}")
@@ -396,7 +393,7 @@ def get_arrays_for_file(neighbourhood_file):
         or len(neighbourhood_distances) != len(neighbourhood_classes)):
         raise RuntimeError("Array lengths differs")
 
-    n_neighbours = list(range(1, max_neighbours+1))  # We'll use these as indexing ranges, if we don't add by 1 we'll not include the max number of neighbours
+    n_neighbours = list(range(1, neighbourhood_limit+1))  # We'll use these as indexing ranges, if we don't add by 1 we'll not include the max number of neighbours
     distances = get_central_distance(neighbourhood_classes, neighbourhood_distances, n_neighbours)
 
     return {"query_word_classes": query_word_classes,
@@ -429,7 +426,33 @@ def weighting_function(distances, weight_type='inverse', eps=1e-5):
         raise ValueError(f"Unknown weight type: {weight_type}")
     
 
+def get_min_neighbours_for_file(neighbourhood_file):
+    """
+    Get the minimum number of neighbours for a given neighbourhood file (greater than 0). This is used for determining the maximum number of neighbours 
+    to analyze across all files, since some files might have very few neighbours for some query words, and we want to include all query words in the analysis.
+    """
+    min_neighbours = None
+    with open(neighbourhood_file, 'rb') as fp:
+        neighbourhood_data = pickle.load(fp)
+        neighbourhoods = neighbourhood_data["neighbourhoods"]
+        for (query_word, query_label), neighbours in neighbourhoods:
+            n_neighbours_for_word = len(neighbours)
+            if n_neighbours_for_word > 0 and (min_neighbours is None or n_neighbours_for_word < min_neighbours):
+                min_neighbours = n_neighbours_for_word
+    return min_neighbours
 
+def get_neighbourhood_limit(neighbourhoods_files, num_workers=0):
+    min_neighbours = None
+    if num_workers > 1:
+        with multiprocessing.Pool(num_workers) as pool:
+            for file_min_neighbours in tqdm(pool.imap_unordered(get_min_neighbours_for_file, neighbourhoods_files), total=len(neighbourhoods_files)):
+                if file_min_neighbours is not None and (min_neighbours is None or file_min_neighbours < min_neighbours):
+                    min_neighbours = file_min_neighbours
+    else:
+        for file_min_neighbours in tqdm(map(get_min_neighbours_for_file, neighbourhoods_files), total=len(neighbourhoods_files)):
+            if file_min_neighbours is not None and (min_neighbours is None or file_min_neighbours < min_neighbours):
+                min_neighbours = file_min_neighbours
+    return min_neighbours
 
 if __name__ == "__main__":
     main()
