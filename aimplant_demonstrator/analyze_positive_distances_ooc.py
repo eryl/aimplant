@@ -382,7 +382,7 @@ def get_arrays_for_file(neighbourhood_file):
     
     # We slice the neighbourhoods to the max number of neighbours, so that we can stack them into ndarrays.
     try:
-        neighbourhood_classes = np.array(neighbourhood_classes, dtype=np.int8)
+        neighbourhood_classes = np.array([neighbourhood_class[:max_neighbours] for neighbourhood_class in neighbourhood_classes] , dtype=np.int8)
         neighbourhood_distances = np.array([neighbourhood_distance[:max_neighbours] for neighbourhood_distance in neighbourhood_distances], dtype=np.float32)
     except ValueError as e:
         print(f"Error converting neighbourhood classes or distances to numpy arrays: {e}")
