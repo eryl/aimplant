@@ -34,7 +34,7 @@ class NeighbourHoodDataset(Dataset):
 def no_tensor_collator(batch):
     return batch
 
-EVAL_METRICS = ('roc_auc', 'precision', 'recall', 'f1')
+EVAL_METRICS = ('roc_auc', 'precision', 'recall', 'f1', 'average_precision')
 
 def main():
     parser = argparse.ArgumentParser(description="Analyze the neighbourhoods extracted from a vector database for a given test dataset.")
@@ -104,7 +104,7 @@ def main():
                 plt.plot(n_neighbours, score, label=weight_type)
             plt.xlabel("Number of Neighbours")
             plt.ylabel(f"{eval_metric} Score")
-            plt.title(f"{eval_metric} vs Number of Neighbours (thresholded on {threshold_on})")
+            plt.title(f"{eval_metric} vs Number of Neighbours (thresholded on {threshold_on})\nPositive examples: {threshold_df['positive_words'].iloc[0]}, Negative examples: {threshold_df['negative_words'].iloc[0]}")
             plt.legend()
             
             plt.savefig(output_dir / f"{threshold_on}_{eval_metric}_vs_neighbours.png")
@@ -297,6 +297,8 @@ def statistics_worker(work_package):
         # that the neighbour is likely to be a negative example. We could of course also
         # invert the distances, but inverting the classes is more straightforward.
         query_word_classes = 1 - store['query_word_classes'][:]
+        positive_words = np.sum(store['query_word_classes'][:])
+        negative_words = len(query_word_classes) - positive_words
         votes = store[weight_type][str(n_neighbours)][:]
         fpr, tpr, roc_thresholds = roc_curve(query_word_classes, votes)
         roc_auc = np.trapezoid(tpr, fpr)
@@ -315,6 +317,8 @@ def statistics_worker(work_package):
         recall = recall_score(query_word_classes, discretized_votes)
         performance_record_ba = {'weight_type': weight_type,
                                 'n_neighbours': n_neighbours,
+                                'positive_words': positive_words,
+                                'negative_words': negative_words,
                                 'roc_auc': roc_auc,
                                 'average_precision': ap, 
                                 'threshold': best_threshold, 
@@ -337,6 +341,8 @@ def statistics_worker(work_package):
         f1 = f1_sweep[best_threshold_index]
         performance_record_ba = {'weight_type': weight_type,
                                 'n_neighbours': n_neighbours,
+                                'positive_words': positive_words,
+                                'negative_words': negative_words,
                                 'roc_auc': roc_auc, 
                                 'average_precision': ap, 
                                 'threshold': best_threshold, 
