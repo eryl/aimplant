@@ -81,22 +81,24 @@ if __name__ == "__main__":
     freq_words = {}
     with open(word_freqs, 'r', encoding='utf-8') as f:
         for line in f:
-            parts = line.strip().split()
-            if not parts:
+            parts = line.strip().split(',')
+            if not parts or parts[0] == 'term':
                 continue
-
-            word = parts[0]
-            freq = int(parts[1]) if len(parts) > 1 else 1
-            freq_words[word] = freq
+            if parts[0] not in stop_words:
+                word = parts[0]
+                freq = int(parts[1]) 
+                freq_words[word] = freq
     #freq_words = {word: freq for word, freq in freq_words.items() if word.lower() not in stop_words}
 
+    print('orden',list(freq_words.keys()))
     result = compare_word_lists(glossary_words, list(freq_words.keys()))
-
+    
     # Summarise frequencies for each group in list2_grouped
-    summarized_freq = {
-        group[0]: sum(freq_words.get(word, 0) for word in group)
-        for group in result['list2_grouped']
-    }
+    summarized_freq = {}
+    for word in result['list2_grouped']:
+        rep_word = word[0]  # Representative word for the group
+        total_freq = sum(freq_words.get(w, 0) for w in word)
+        summarized_freq[rep_word] = total_freq
 
     print(f"Glossary - Original: {len(result['list1_original'])}, Grouped: {len(result['list1_grouped'])}")
     print(f"Word Frequency List - Unique: {len(result['list2_original'])}, Grouped: {len(result['list2_grouped'])}, Total tokens: {sum(freq_words.values())}")
