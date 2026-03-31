@@ -91,6 +91,20 @@ if __name__ == "__main__":
     #freq_words = {word: freq for word, freq in freq_words.items() if word.lower() not in stop_words}
 
     result = compare_word_lists(glossary_words, list(freq_words.keys()))
+
+    # Summarise frequencies for each group in list2_grouped
+    summarized_freq = {
+        group[0]: sum(freq_words.get(word, 0) for word in group)
+        for group in result['list2_grouped']
+    }
+
     print(f"Glossary - Original: {len(result['list1_original'])}, Grouped: {len(result['list1_grouped'])}")
     print(f"Word Frequency List - Unique: {len(result['list2_original'])}, Grouped: {len(result['list2_grouped'])}, Total tokens: {sum(freq_words.values())}")
     print(f"Common words: {len(result['common_words'])}:  {result['common_words']}")
+    print(f"\nSummarized frequencies per group ({len(summarized_freq)} groups):")
+    for rep_word, total_freq in sorted(summarized_freq.items(), key=lambda x: x[1], reverse=True):
+        group_words = next(g for g in result['list2_grouped'] if g[0] == rep_word)
+        if len(group_words) > 1:
+            print(f"  {rep_word}: {total_freq}  (merged: {group_words})")
+        else:
+            print(f"  {rep_word}: {total_freq}")
