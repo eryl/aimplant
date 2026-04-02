@@ -73,12 +73,12 @@ def summarize_and_save(grouped_list, output_file):
                 f.write(f"  {rep_word}: {total_freq}\n")
 
 if __name__ == "__main__":
-    #glossary = '/home/abragam23/fedhealth_data/Glossary_only_known_implants.txt'
-    #word_freqs = '/home/abragam23/fedhealth_data/word_frequencies.txt'
-    #stop_words_file = '/home/abragam23/fedhealth_data/manual_stop_list.txt'
-    glossary = 'glossary.txt'
-    word_freqs = 'word_freq.txt'
-    stop_words_file = 'stop_words.txt'
+    glossary = '/home/abragam23/fedhealth_data/Glossary_only_known_implants.txt'
+    word_freqs = '/home/abragam23/fedhealth_data/word_frequencies.txt'
+    stop_words_file = '/home/abragam23/fedhealth_data/manual_stop_list.txt'
+    #glossary = 'glossary.txt'
+    #word_freqs = 'word_freq.txt'
+    #stop_words_file = 'stop_words.txt'
 
     # Load stop words from file and combine with NLTK's Swedish stop words
     with open(stop_words_file, 'r', encoding='utf-8') as f:
