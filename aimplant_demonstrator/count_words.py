@@ -1,5 +1,4 @@
 import csv
-
 from nltk.metrics.distance import jaro_winkler_similarity
 from tqdm import tqdm
 from nltk.corpus import stopwords
@@ -52,22 +51,36 @@ def compare_word_lists(list1, list2, threshold=0.85):
                 break
     
     return {
-        "list1_original": list1,
-        "list1_grouped": groups1,
-        "list2_original": list2,
-        "list2_grouped": groups2,
+        "glossary_original": list1,
+        "glossary_grouped": groups1,
+        "freq_original": list2,
+        "freq_grouped": groups2,
         "common_words": common_words,
     }
 
-# Example usage
-if __name__ == "__main__":
+def summarize_and_save(grouped_list, output_file):
+    summarized = {}
+    for word in grouped_list:
+        rep_word = word[0]  # Representative word for the group
+        total_freq = len(word)  # Count of words in the group
+        summarized[rep_word] = total_freq
+    with open(output_file, 'w', encoding='utf-8') as f:
+        for rep_word, total_freq in sorted(summarized.items(), key=lambda x: x[1], reverse=True):
+            group_words = next(g for g in grouped_list if g[0] == rep_word)
+            if len(group_words) > 1:
+                f.write(f"  {rep_word}: {total_freq}; {group_words}\n")
+            else:
+                f.write(f"  {rep_word}: {total_freq}\n")
 
+if __name__ == "__main__":
     #glossary = '/home/abragam23/fedhealth_data/Glossary_only_known_implants.txt'
     #word_freqs = '/home/abragam23/fedhealth_data/word_frequencies.txt'
     #stop_words_file = '/home/abragam23/fedhealth_data/manual_stop_list.txt'
     glossary = 'glossary.txt'
     word_freqs = 'word_freq.txt'
     stop_words_file = 'stop_words.txt'
+
+    # Load stop words from file and combine with NLTK's Swedish stop words
     with open(stop_words_file, 'r', encoding='utf-8') as f:
         stop_words = [line.strip() for line in f if line.strip()]        
         stop_words = set(stop_words + list(stopwords.words('swedish')))
@@ -80,33 +93,21 @@ if __name__ == "__main__":
     # Read word_freq.txt and extract words with their frequencies
     freq_words = {}
     with open(word_freqs, 'r', encoding='utf-8') as f:
-        for line in f:
-            parts = line.strip().split(',')
+        reader = csv.reader(f)
+        for parts in reader:
             if not parts or parts[0] == 'term':
                 continue
             if parts[0] not in stop_words:
                 word = parts[0]
                 freq = int(parts[1]) 
                 freq_words[word] = freq
-    #freq_words = {word: freq for word, freq in freq_words.items() if word.lower() not in stop_words}
 
-    print('orden',list(freq_words.keys()))
     result = compare_word_lists(glossary_words, list(freq_words.keys()))
-    
-    # Summarise frequencies for each group in list2_grouped
-    summarized_freq = {}
-    for word in result['list2_grouped']:
-        rep_word = word[0]  # Representative word for the group
-        total_freq = sum(freq_words.get(w, 0) for w in word)
-        summarized_freq[rep_word] = total_freq
 
-    print(f"Glossary - Original: {len(result['list1_original'])}, Grouped: {len(result['list1_grouped'])}")
-    print(f"Word Frequency List - Unique: {len(result['list2_original'])}, Grouped: {len(result['list2_grouped'])}, Total tokens: {sum(freq_words.values())}")
+    print(f"Glossary - Original: {len(result['glossary_original'])}, Grouped: {len(result['glossary_grouped'])}")
+    summarize_and_save(result['glossary_grouped'],'glossary_summary.txt')
+    print(f"Word Frequency List - Unique: {len(result['freq_original'])}, Grouped: {len(result['freq_grouped'])}, Total tokens: {sum(freq_words.values())}")
+    summarize_and_save(result['freq_grouped'],'word_freq_summary.txt')
     print(f"Common words: {len(result['common_words'])}:  {result['common_words']}")
-    print(f"\nSummarized frequencies per group ({len(summarized_freq)} groups):")
-    for rep_word, total_freq in sorted(summarized_freq.items(), key=lambda x: x[1], reverse=True):
-        group_words = next(g for g in result['list2_grouped'] if g[0] == rep_word)
-        if len(group_words) > 1:
-            print(f"  {rep_word}: {total_freq}  (merged: {group_words})")
-        else:
-            print(f"  {rep_word}: {total_freq}")
+
+

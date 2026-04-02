@@ -1,4 +1,5 @@
 term,count
+",",20000
 .,23467592
 :,9161738
 och,3069995
@@ -14,7 +15,9 @@ för,1062334
 /,998288
 som,865978
 diagnos,823384
-patienten,723923
+patient,723923
+patienten,100000
+patienthistorik,200000
 om,707419
 är,699061
 1,645765

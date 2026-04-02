@@ -1,0 +1,458 @@
+  pacemakerrytm: 118; ['pacemakerrytm', 'pacenmakerrytm', 'pacemaker', '45pacemakerrytm', '50pacemakerrytm', 'ddd-pacemakersystem', 'pace', 'pace-makerrytm', 'pacekateter', 'pacemaerslag', 'pacemakar', 'pacemaken', 'pacemaker-beh', 'pacemaker-ddd', 'pacemaker-dosa', 'pacemaker-dosbyte', 'pacemaker-ekg', 'pacemaker-elektrod', 'pacemaker-elektroderna', 'pacemaker-extraktion', 'pacemaker-implantation', 'pacemaker-indikation', 'pacemaker-introducer', 'pacemaker-kontroll', 'pacemaker-kontroller', 'pacemaker-kontrollerna', 'pacemaker-loggen', 'pacemaker-läkare', 'pacemaker-mott', 'pacemaker-mottagningen', 'pacemaker-op', 'pacemaker-operation', 'pacemaker-programmeringen', 'pacemaker-ssk', 'pacemakerbatteri', 'pacemakerbehandl', 'pacemakerbehov', 'pacemakerberoende', 'pacemakerbyte', 'pacemakerbärare', 'pacemakerdelen', 'pacemakerdosa', 'pacemakerdosan', 'pacemakerdosbyte', 'pacemakerdose', 'pacemakerdysfunktion', 'pacemakerelektrod', 'pacemakerelektroden', 'pacemakerelektroder', 'pacemakerelektroderna', 'pacemakerextraktion', 'pacemakerficka', 'pacemakerfickan', 'pacemakerficke-området', 'pacemakerfrekvensen', 'pacemakerfunktion', 'pacemakerfunktionen', 'pacemakerförband', 'pacemakerförbandet', 'pacemakerimp', 'pacemakerimpl', 'pacemakerimplantat', 'pacemakerimplantation', 'pacemakerindikation', 'pacemakerinformation', 'pacemakeringrepp', 'pacemakerinplantering', 'pacemakerjustering', 'pacemakerkabel', 'pacemakerkabeln', 'pacemakerkabelsystemet', 'pacemakerkablar', 'pacemakerkablarna', 'pacemakerkateter', 'pacemakerkontroll', 'pacemakerkontroller', 'pacemakerlab', 'pacemakerlektrod', 'pacemakerläkare', 'pacemakermodell', 'pacemakermonitor', 'pacemakermot', 'pacemakermott', 'pacemakern', 'pacemakerns', 'pacemakerområdet', 'pacemakeromställning', 'pacemakerop', 'pacemakeroperartion', 'pacemakeroperation', 'pacemakeroperationen', 'pacemakeropertion', 'pacemakerordinär', 'pacemakerprogrammerare', 'pacemakers', 'pacemakersladden', 'pacemakerstimulation', 'pacemakerstimulerade', 'pacemakerstimulerat', 'pacemakerstimuleringar', 'pacemakerstyrd', 'pacemakersystem', 'pacemakersystemet', 'pacemakersåret', 'pacemakertnt-serie', 'pacemakertyp', 'pacemakeruppgrad', 'pacemakerutnyttjande', 'pacemakerändring', 'pacemakerärren', 'pacemakeråterbesök', 'pacemakrelaterade', 'pacemakrslag', 'pacemkeroperation', 'pacemkerrytm', 'pacmakerrytm', 'pagemakerrytm', 'vvi-pacemakersystem']
+  mitraclip: 24; ['mitraclip', 'mitraclip-behandling', 'mitraclip-gruppen', 'mitraclip-intervention', 'mitraclip-rond', 'mitraclip-åtgärd', 'mitraclipingrepp', 'mitraclipkandidat', 'mitracliprond', 'mitraclipåtgärd', 'mitraliclip', 'mitralisklaff-op', 'mitralisklaffplastik', 'mitralisklaffprotes', 'mitralisklaffprotesen', 'mitralisklaffproteser', 'mitralisklaffsplastik', 'mitralisklaffsprotes', 'mitralisprotes', 'mitralisprotesen', 'mitralisprotesfunktion', 'mitralisring', 'mitralisringen', 'mitralprotesen']
+  elektrodadapter: 23; ['elektrodadapter', 'elektrodbanan', 'elektrodbrott', 'elektrodbyte', 'elektroden', 'elektroder', 'elektroderDiagnos', 'elektroderna', 'elektrodimplantation', 'elektrodkabeln', 'elektrodkablar', 'elektrodkablarna', 'elektrodläge', 'elektrodlägen', 'elektrodlägena', 'elektrodlägesparade', 'elektrodläget', 'elektrodplatta', 'elektrodskada', 'elektrodskador', 'elektrodvärden', 'elektrodänden', 'elektroedn']
+  shuntbar: 19; ['shuntbar', 'shuntbeh', 'shuntbekymmer', 'shuntberoende', 'shuntbesvär', 'shuntbyten', 'shuntbär', 'shuntdelar', 'shuntens', 'shuntHar', 'shuntkammaren', 'shuntkatetern', 'shuntkatetrar', 'shuntmaterial', 'shuntproblem', 'shuntslang', 'shuntslangarna', 'shuntslangen', 'shuntöv']
+  baclofenpump: 18; ['baclofenpump', 'baclofenpumpen', 'baclofenpumpens', 'baklofen-pump', 'baklofen-pumpen', 'baklofen-pumpsbyte', 'baklofen-pumpsystemet', 'baklofenpump', 'baklofenpumpen', 'baklofenpumpsbyte', 'baklofenpumpsbärare', 'baklofenpumpsdosering', 'baklofenpumpskateter', 'baklofenpumpssystem', 'baklofenpumpssystemet', 'baklofenpumpsystem', 'baklofenspumpsbyte', 'ballongpump']
+  medronic: 18; ['medronic', 'medronicdosan', 'medtronic', 'medtronic-ankare', 'medtronic-device', 'medtronic-dosa', 'medtronic-dosor', 'medtronic-elektrod', 'medtronic-icd', 'medtronic-pacemaker', 'medtronic-system', 'medtronicbatteriet', 'medtronicdevice', 'medtronicdosa', 'medtronicelektrod', 'medtronics', 'medtronicsystem', 'medtronid']
+  impl: 14; ['impl', 'impland', 'implanderad', 'implanera', 'implanerad', 'implaneratad', 'implantatörerna', 'implantera', 'implanterad', 'implanterade', 'implanteras', 'implanterbar', 'implantering', 'nyimpl']
+  mitralisklaffar: 13; ['mitralisklaffar', 'mitralisklaffarna', 'mitralisklaffens', 'mitralisklaffplastik-op', 'mitralisklaffprotesfunktion', 'mitralisklaffprotesläckage', 'mitralisklaffåtgärd', 'mitralklaffoperation', 'mitralklaffplastik', 'mitralklaffprotes', 'mitralklaffprotesen', 'mitralklaffsprotes', 'mitralklaffsproteston']
+  stimulering: 13; ['stimulering', 'stimuleringen', 'stimuleringfrekvens', 'stimuleringseffekt', 'stimuleringsfunktion', 'stimuleringsfunktionen', 'stimuleringsigångsättningen', 'stimuleringsstyrka', 'stimuleringsstyrkan', 'stimuleringstekniken', 'stimuleringstendenser', 'stimuleringsutrustning', 'stimuleringsutrustningen']
+  vagus: 13; ['vagus', 'vagus-stimulator', 'vagusnerstimulatorer', 'vagusnerv', 'vagusnervs', 'vagusnervsstimulator', 'vagusnervstimulation', 'vagusnervstimulator', 'vagusnervstimulatorn', 'vagusstimulator', 'vagusstimulatorn', 'vagusstimulering', 'vagustimulator']
+  shunt-operation: 12; ['shunt-operation', 'shuntar', 'shunten', 'shuntfraktion', 'shuntjustering', 'shuntkort', 'shuntoperation', 'shuntoperationen', 'shuntrevision', 'shuntventil', 'shuntventilen', 'vp-shuntoperation']
+  batteri: 11; ['batteri', 'batteribyte', 'batteridosa', 'batteridosan', 'batterier', 'batteriet', 'batterifickan', 'batteriimplantat', 'batteriimplatant', 'batterinivå', 'batteristatus+cybersecurity']
+  aortagraft: 10; ['aortagraft', 'aortaklaff', 'aortaklaffbyte', 'aortaklaffen', 'aortaklaffprotes', 'aortaklaffprotesen', 'aortaklaffsprotes', 'aortaklaffvitium', 'aortaprotes', 'aortarotgraft']
+  ballong: 9; ['ballong', 'ballong-pci', 'ballongbehandling', 'ballongdilatation', 'ballongen', 'ballongkateter', 'ballongvenogram', 'ballongvidgning', 'ballongvidning']
+  cd3361-40: 9; ['cd3361-40', 'cd3361-40c', 'cd3361-40qc', 'cd3367-40', 'cd3367-40c', 'cd3367-40q', 'cd3367-40qc', 'cd3371', 'cd3371-40qc']
+  dbs-elektrod: 9; ['dbs-elektrod', 'dbs-elektroder', 'elektrod', 'icd-elektrod', 'pm-elektrod', 'rv-elektrod', 'scs-elektrod', 'vk-elektrod', 'vä-elektrod']
+  fm-elektroden: 9; ['fm-elektroden', 'icd-elektroden', 'icd-elektrodens', 'lv-elektroden', 'pm-elektroder', 'pm-elektroderna', 'rv-elektroden', 'rv-elektroderna', 'vä-elektroden']
+  pace-elektrod: 9; ['pace-elektrod', 'pace-extraktion', 'pace-kontroll', 'pace-kontroller', 'paceberoende', 'paceelektrod', 'paceelektroden', 'pacesense-elektrod', 'special-elektroder']
+  reveal: 9; ['reveal', 'reveal-dosa', 'reveal-dosan', 'reveal-dosans', 'reveal-dosorna', 'reveal-explantation', 'reveal-explantationen', 'reveal-impl', 'reveal-inplantation']
+  trach: 9; ['trach', 'trach-andning', 'trach-hål', 'trach-kompress', 'trachealkanyl', 'trachealkanylen', 'trachen', 'tracheostomi', 'tracken']
+  imlpantation: 8; ['imlpantation', 'implant', 'implantation', 'implantatposition', 'implantatör', 'implanterat', 'reimplantation', 'reimplantationen']
+  mp-kateter: 8; ['mp-kateter', 'pd--kateter', 'pd-kateter', 'peg-kateter', 'picco-kateter', 'pumpkateter', 'rv-kateter', 'tempkateter']
+  pace-impl: 8; ['pace-impl', 'pace-mott', 'pace-möjlighet', 'pace-op', 'paceimpl', 'paceimplant', 'paceimplantation', 'paceimplantationen']
+  tricuspidalisanuloplastik: 8; ['tricuspidalisanuloplastik', 'tricuspidalisplastik', 'tricuspidalisplastiken', 'tricuspidalisring', 'tricuspidalisringen', 'tricuspidalplastik', 'trikuspidalisanuloplastik', 'trikuspidalisprotesen']
+  autocap: 7; ['autocap', 'autocapsuremätning', 'autocapture', 'autocapture-trenden', 'autocapturefunktionen', 'autocapure', 'autocature']
+  cd1359-40: 7; ['cd1359-40', 'cd1359-40c', 'cd1359-40qc', 'cd2359-40', 'cd2359-40c', 'cd2359-40q', 'cd2359-40qc']
+  icd: 7; ['icd', 'icd-dosa', 'icd-dr', 'icd-impl', 'icd-op', 'icd-ssk', 'icdn']
+  klaffbyte: 7; ['klaffbyte', 'klaffprotes', 'klaffprotesen', 'klaffproteser', 'klaffprotess', 'klaffproteston', 'klaffåtg']
+  lp-shunt: 7; ['lp-shunt', 'lp-shuntsbehandling', 'shunt', 'vp-shunt', 'vp-shuntad', 'vp-shunten', 'vp-shut']
+  saphien-3-klaff: 7; ['saphien-3-klaff', 'saphien-3-protes', 'saphien-iii-klaffprotes', 'sapien-3-klaff', 'sapien-iii-klaff', 'sapien-iii-klaffprotes', 'sapienklaff']
+  stimulationsbatteri: 7; ['stimulationsbatteri', 'stimulationssystem', 'stimulatorbatteri', 'stimulatorbatteriet', 'stimulatorfunktion', 'stimulatorinställningar', 'stimuleringsresultat']
+  bakssträngsstimulering: 6; ['bakssträngsstimulering', 'baksträngsstimulator', 'baksträngsstimulering', 'baksträngsstimuleringssystem', 'baksträngsstimuleringssystemet', 'bakstängsstimulatorn']
+  clip: 6; ['clip', 'clip-behandling', 'clipinsättning', 'clipronden', 'clips', 'clipsbehandling']
+  ddd-pacemaker: 6; ['ddd-pacemaker', 'ddd-pacemakerimpl', 'ddd-pacemakerimplantation', 'dddd-pacemaker', 'rv-pacemaker', 'vdd-pacemaker']
+  förmakelektroden: 6; ['förmakelektroden', 'förmakselektrod', 'förmakselektrode', 'förmakselektroden', 'förmakslelektrod', 'kammarelektroden']
+  nervstimulator: 6; ['nervstimulator', 'nervstimulatorn', 'nervusvagusstimulator', 'nervvagusstimulator', 'neurostimulator', 'vns-stimulator']
+  pace-behandling: 6; ['pace-behandling', 'pace-beroende', 'pace-dr', 'pacemaker-behandling', 'pacemakerbehandling', 'pacemakerbehandlingen']
+  pericardkateter: 6; ['pericardkateter', 'pericardtappningskateter', 'perikardkateter', 'perikardkatetern', 'peritonealkateter', 'peritonealkatetern']
+  port-a: 6; ['port-a', 'port-a-cath', 'port-a-cath-borttagning', 'porta-cath', 'portacath', 'porth-a-cath']
+  shuntinläggning: 6; ['shuntinläggning', 'shuntinläggningsstället', 'shuntinställning', 'shuntning', 'vp-shuntinläggning', 'vp-shuntsinläggning']
+  baklofendosering: 5; ['baklofendosering', 'baklofenkateter', 'baklofenpumpsbehandling', 'baklofenpumpsbehandlingen', 'baklofentest']
+  catheter: 5; ['catheter', 'cdk-kateter', 'cs-kateter', 'cs-katetern', 'cvk-kateter']
+  cochlea: 5; ['cochlea', 'cochleaimplantat', 'cochleaimplantetet', 'cochleainplantat', 'cochleaoperation']
+  codman: 5; ['codman', 'codman-ventil', 'codman-ventilen', 'codmanventil', 'cordman']
+  coil: 5; ['coil', 'coil-elektrod', 'coilen', 'coiling', 'coilpaketet']
+  composite-graft: 5; ['composite-graft', 'compositegraft', 'compositegraftet', 'compositegraftets', 'compositgraft']
+  inplantat: 5; ['inplantat', 'inplantationen', 'inplanterad', 'inplantering', 'nyimplantat']
+  microdialyskatetrar: 5; ['microdialyskatetrar', 'microkateter', 'mikrodialyskateter', 'mikrodialyskatetetrar', 'mikrodialyskatetrar']
+  primär-impl: 5; ['primär-impl', 'primär-pci', 'primärimplantation', 'primärimplantationen', 'primärimplanterad']
+  pulmonalisgraft: 5; ['pulmonalisgraft', 'pulmonalisgraftet', 'pulmonalisklaff', 'pulmonalisklaffen', 'pulmonalisklaffvalvulotomi']
+  ryggmärgselektrod: 5; ['ryggmärgselektrod', 'ryggmärgsstimulator', 'ryggmärgsstimulatorn', 'ryggmärgstimulator', 'ryggmärgstimulering']
+  skruv: 5; ['skruv', 'skruvarna', 'skruvelektroder', 'skruven', 'skruvning']
+  synchro-med: 5; ['synchro-med', 'synchromed', 'synchromed-ii', 'synchromed-pump', 'syncra']
+  vagusnersstimulatorbatteri: 5; ['vagusnersstimulatorbatteri', 'vagusnervsstimulation', 'vagusnervsstimulatorbatteriet', 'vagusnervstimulatorbatteri', 'vagusstimulatorbatteri']
+  ventrikelkateter: 5; ['ventrikelkateter', 'ventrikelkatetern', 'ventrikelshunten', 'venture-platta', 'vertebralkateter']
+  puls: 4; ['puls', 'pulsarstent', 'pulsgenerator', 'pulsgeneratorn']
+  amplatz: 4; ['amplatz', 'amplatzer', 'amplatzer-device', 'amplazter']
+  aortaprotesen: 4; ['aortaprotesen', 'aortastenos', 'aortastenosen', 'rotprotes']
+  assura: 4; ['assura', 'assurety', 'assurity', 'assurity-pacemaker']
+  bukkateter: 4; ['bukkateter', 'bukkatetern', 'bukkateterventilen', 'pukkatetern']
+  crt-behandling: 4; ['crt-behandling', 'crt-d-behandling', 'icd-behandling', 'pci-behandlingen']
+  crt-d-pacemaker: 4; ['crt-d-pacemaker', 'crt-pacemaker', 'dddr-pacemaker', 'icd-pacemaker']
+  dbs-system: 4; ['dbs-system', 'dbs-systemet', 'dbs-systemimplantation', 'vns-system']
+  dc-stimulator: 4; ['dc-stimulator', 'scs-stimulator', 'stimulator', 'stimulatorn']
+  device-implantation: 4; ['device-implantation', 'deviceimplantation', 'icd-implantation', 'icdimplantation']
+  dos-byte: 4; ['dos-byte', 'dosbyte', 'dosbytet', 'icd-dosbyte']
+  elektroddislokation: 4; ['elektroddislokation', 'elektrodglidning', 'elektrodlägeskontroll', 'elektrodslyngor']
+  höftprotes: 4; ['höftprotes', 'höftprotesen', 'höftproteser', 'höftprotesrevision']
+  icd-bärare: 4; ['icd-bärare', 'icd-kabeln', 'icd-läkare', 'icd-terapi']
+  icd-elektroder: 4; ['icd-elektroder', 'icd-elektroderna', 'icd-terapier', 'stn-elektroder']
+  klaffoperation: 4; ['klaffoperation', 'klaffopererad', 'klaffprotestoner', 'klaffskivorna']
+  lv-elektrod: 4; ['lv-elektrod', 'lv-elektrodbyte', 'lv-elektroder', 'lv-elektroderna']
+  pace-indikation: 4; ['pace-indikation', 'pace-konfiguration', 'pacefunktion', 'pm-indikation']
+  pace-omställning: 4; ['pace-omställning', 'pacemakeravläsningen', 'paceomställning', 'paceopstället']
+  pacemaker-anläggning: 4; ['pacemaker-anläggning', 'pacemakerimplantationen', 'pacemakeruppföljning', 'pm-inläggning']
+  peg-operation: 4; ['peg-operation', 'peg-operationen', 'pm-operation', 'pmoperation']
+  pigtail-drän: 4; ['pigtail-drän', 'pigtaildrän', 'pigtailpleuradrän', 'pigtaledränaget']
+  protecta: 4; ['protecta', 'protesen', 'proteser', 'protesklick']
+  protesdegeneration: 4; ['protesdegeneration', 'protesdysfunktion', 'protesfunktion', 'protesoperation']
+  singelcoil-elektrod: 4; ['singelcoil-elektrod', 'singelcoil-icd-elektrod', 'singlecoil-icd-elektrod', 'singlecoilelektrod']
+  stenoser: 4; ['stenoser', 'stent', 'stenten', 'stentet']
+  svc-coil: 4; ['svc-coil', 'svc-coil-kanalen', 'svc-coilen', 'vfc-coil']
+  tavi: 4; ['tavi', 'tavi-bedömd', 'tavi-klaff', 'tmvi']
+  urinkateter: 4; ['urinkateter', 'urinkateterbärare', 'urinkatetern', 'urinkateterpga']
+  aai-pacemaker: 3; ['aai-pacemaker', 'aair-pacemaker', 'ai-pacemaker']
+  biotronic: 3; ['biotronic', 'biotronik', 'biotroniks']
+  celsite-reservoar: 3; ['celsite-reservoar', 'celsite-reservoir', 'celsite-reservoiren']
+  centralelektroder: 3; ['centralelektroder', 'centralkatetern', 'tendrilelektroden']
+  craniofix: 3; ['craniofix', 'craniofixen', 'kraniofix']
+  crt: 3; ['crt', 'crt-d', 'crt-p']
+  ddd: 3; ['ddd', 'ddd-dosa', 'ddd-pm']
+  defibrillatordelen: 3; ['defibrillatordelen', 'defibrillatorn', 'defibrilleringsdelen']
+  dosa: 3; ['dosa', 'dosan', 'dosvariant']
+  dosbyteprimärimpl: 3; ['dosbyteprimärimpl', 'dosbyteprimärimplantation', 'primärimpl']
+  dosficka: 3; ['dosficka', 'dosfickan', 'dosfickerevision']
+  graft: 3; ['graft', 'graft-infektion', 'vengraft']
+  halo-västen: 3; ['halo-västen', 'haloväst', 'halovästen']
+  his-kateter: 3; ['his-kateter', 'his-katetern', 'urin-kateter']
+  hjärtklaffprotes: 3; ['hjärtklaffprotes', 'hjärtklaffprotesen', 'hjärtproteser']
+  kabelbrott: 3; ['kabelbrott', 'kabelbyte', 'kabeln']
+  kammarpacing: 3; ['kammarpacing', 'kammarpacingmv', 'kammarsensing']
+  kateterburet: 3; ['kateterburet', 'kateterisering', 'kateterklaffgruppen']
+  klaffimplantat: 3; ['klaffimplantat', 'klaffimplantation', 'klaffplastik']
+  knäprotes: 3; ['knäprotes', 'knäprotesoperation', 'knäprotesoperaton']
+  kuff: 3; ['kuff', 'kuffad', 'kuffar']
+  lv-pacing: 3; ['lv-pacing', 'lv-pacingalgoritm', 'rv-pacing']
+  metallimplantat: 3; ['metallimplantat', 'metallspliter', 'metallstent']
+  microkateterrota-link: 3; ['microkateterrota-link', 'microkateterrotalink', 'mikrokateterrotalinkroadrunner']
+  mvp-dosa: 3; ['mvp-dosa', 'pm-dosa', 'pm-dosan']
+  nyimplantation: 3; ['nyimplantation', 'nyimplanterad', 'nyimplanterade']
+  optisense-elektrod: 3; ['optisense-elektrod', 'optisense-elektroden', 'optisenseelektrod']
+  pace-sense: 3; ['pace-sense', 'pace-system', 'pacesense-kabel']
+  paceingången: 3; ['paceingången', 'pacemaker-inläggning', 'pacemakerinläggning']
+  pacemakerelektrodendokarditen: 3; ['pacemakerelektrodendokarditen', 'pacemakerexplantation', 'pacemakerkabelinfektion']
+  pacing-behov: 3; ['pacing-behov', 'pacingbehov', 'pacingsite']
+  perimount: 3; ['perimount', 'perimount-protes', 'perimountprotes']
+  pex-kater: 3; ['pex-kater', 'pexkatetern', 'plexuskateter']
+  pm1160: 3; ['pm1160', 'pm1162', 'pm2160']
+  pm1272: 3; ['pm1272', 'pm2112', 'pm2272']
+  pm3222: 3; ['pm3222', 'pm3242', 'pm3262']
+  quartet: 3; ['quartet', 'quartet-elektrod', 'quartet-elektroden']
+  saphien-iii-protesstorlek: 3; ['saphien-iii-protesstorlek', 'sapien-iii', 'sapien-iii-protes']
+  scs: 3; ['scs', 'scs-dosa', 'scs-stim']
+  shuntdysfunktion: 3; ['shuntdysfunktion', 'shuntfunktion', 'shuntinfektion']
+  shuntmotstånd: 3; ['shuntmotstånd', 'shuntmotståndet', 'shuntsystemet']
+  signelcoil: 3; ['signelcoil', 'singelcoil', 'singlecoil']
+  stentbehandling: 3; ['stentbehandling', 'stentimplantering', 'stentplacering']
+  stimloc: 3; ['stimloc', 'stimulatordosa', 'stimulatorenhet']
+  svikt-pacemaker: 3; ['svikt-pacemaker', 'vvi-pacemaker', 'vvir-pacemaker']
+  vim-stimulator: 3; ['vim-stimulator', 'vim-stimulatorer', 'vimstimulator']
+  vp-shuntbehandling: 3; ['vp-shuntbehandling', 'vp-shuntbärare', 'vp-shuntning']
+  4076: 2; ['4076', '4076-elektrod']
+  abbot: 2; ['abbot', 'abbott']
+  adapta: 2; ['adapta', 'adapta-dosa']
+  agraffer: 2; ['agraffer', 'agrafferna']
+  aneurysmklämmor: 2; ['aneurysmklämmor', 'aneurysmklämmorna']
+  antisifon: 2; ['antisifon', 'antisifon-inläggning']
+  aortaklaffopererad: 2; ['aortaklaffopererad', 'aortklaffprotes']
+  avklippes: 2; ['avklippes', 'avklippt']
+  bactiseal-kateter: 2; ['bactiseal-kateter', 'bactiseal-katetern']
+  baklofenpumpsinfektion: 2; ['baklofenpumpsinfektion', 'baklofenpumpskateterdysfunktion']
+  boston-dosa: 2; ['boston-dosa', 'boston-elektrod']
+  bt-shunt: 2; ['bt-shunt', 'v-shunt']
+  cava-filtret: 2; ['cava-filtret', 'cavafilter']
+  cd3211-36q: 2; ['cd3211-36q', 'cd3261-40']
+  coronarius-elektrod: 2; ['coronarius-elektrod', 'coronariuselektrod']
+  crt-d-impl: 2; ['crt-d-impl', 'crt-d-system']
+  crt-device: 2; ['crt-device', 'crt-dvidare']
+  crt-system: 2; ['crt-system', 'icd-system']
+  ct-shuntöversikt: 2; ['ct-shuntöversikt', 'dt-shuntöversikt']
+  cvk-katetern: 2; ['cvk-katetern', 'cvk-plattan']
+  d354drg: 2; ['d354drg', 'd354drm']
+  dbs: 2; ['dbs', 'dbs-dosa']
+  dbs-operation: 2; ['dbs-operation', 'icd-operation']
+  ddd-pacing: 2; ['ddd-pacing', 'pacing']
+  ddd-system: 2; ['ddd-system', 'dddr-system']
+  denver-shunt: 2; ['denver-shunt', 'denvershunt']
+  devicekontroll: 2; ['devicekontroll', 'icd-kontroll']
+  diskimplantat: 2; ['diskimplantat', 'implantat']
+  diskproteser: 2; ['diskproteser', 'knäproteser']
+  ekg-elektroder: 2; ['ekg-elektroder', 'ekg-elektroderna']
+  elektrodlägesbestämning: 2; ['elektrodlägesbestämning', 'elektrodsensing']
+  endurety: 2; ['endurety', 'endurity']
+  femostop: 2; ['femostop', 'femostopp']
+  fortify: 2; ['fortify', 'fortify-bur']
+  freestyle-protes: 2; ['freestyle-protes', 'freestyleprotes']
+  g20a1: 2; ['g20a1', 'g70a1']
+  halvprotes: 2; ['halvprotes', 'protes']
+  hö-kammarpace: 2; ['hö-kammarpace', 'kammarpace']
+  högerkammarelektrod: 2; ['högerkammarelektrod', 'högerkammarelektroden']
+  icd-implantantation: 2; ['icd-implantantation', 'inplantation']
+  icd-kontrollen: 2; ['icd-kontrollen', 'pm-kontrollen']
+  impulsgenerator: 2; ['impulsgenerator', 'impulsgeneratorn']
+  it-pump: 2; ['it-pump', 'it-pumpsystem']
+  jude-protes: 2; ['jude-protes', 'judeprotes']
+  kabeljustering: 2; ['kabeljustering', 'pace-justering']
+  kammarelektrod: 2; ['kammarelektrod', 'kammarelektroder']
+  klaff-i-klaff: 2; ['klaff-i-klaff', 'klaff-impl']
+  lateralis-skruv: 2; ['lateralis-skruv', 'lateralisskruvar']
+  lv-stimulering: 2; ['lv-stimulering', 'stn-stimulering']
+  mvp-system: 2; ['mvp-system', 'vvi-system']
+  nefrostomikatetern: 2; ['nefrostomikatetern', 'nefrostomikateterpåse']
+  omprog: 2; ['omprog', 'omprogr']
+  pace-läkarbesök: 2; ['pace-läkarbesök', 'pacekablar']
+  pace-uppgradering: 2; ['pace-uppgradering', 'paceoperation']
+  pacemakerdosficka: 2; ['pacemakerdosficka', 'pacemakerdosfickan']
+  pacemakeromprogrammering: 2; ['pacemakeromprogrammering', 'pavcemakeroperation']
+  pci-ingreppet: 2; ['pci-ingreppet', 'tavi-ingreppets']
+  pentaraykateter: 2; ['pentaraykateter', 'peritonialkateter']
+  pigtailkateter: 2; ['pigtailkateter', 'plastkatetern']
+  pm: 2; ['pm', 'pmt']
+  pm-inpl: 2; ['pm-inpl', 'pm-op']
+  pm-kontroll: 2; ['pm-kontroll', 'pm-kontroller']
+  pm-spik: 2; ['pm-spik', 'pm-spikar']
+  pm3562: 2; ['pm3562', 'pm3662']
+  pumpbyte: 2; ['pumpbyte', 'pumpkatetern']
+  qaudra: 2; ['qaudra', 'quaddra']
+  quadripolär: 2; ['quadripolär', 'quadripolära']
+  quickflex: 2; ['quickflex', 'quicksite']
+  reimplant: 2; ['reimplant', 'reimplanterad']
+  rest-shunt: 2; ['rest-shunt', 'restshunt']
+  rv-coil: 2; ['rv-coil', 'rv-coilen']
+  rv-pace: 2; ['rv-pace', 'rv-pacesense-elektroden']
+  scs-system: 2; ['scs-system', 'scs-systemet']
+  sense-elektrod: 2; ['sense-elektrod', 'sense-elektroden']
+  shuntflöde: 2; ['shuntflöde', 'shunthäfte']
+  shuntomställningen: 2; ['shuntomställningen', 'shuntöppning']
+  shuntrelaterad: 2; ['shuntrelaterad', 'shuntreviderad']
+  shuntsystem: 2; ['shuntsystem', 'shuntsystemVentrikeldränage']
+  spinalkateter: 2; ['spinalkateter', 'spinalkateterbyte']
+  starclose: 2; ['starclose', 'starclosestängning']
+  stent-in-stent'3: 2; ["stent-in-stent'3", 'stentning']
+  stn-stimulator: 2; ['stn-stimulator', 'stn-stimulatorsystem']
+  strata-ventilen: 2; ['strata-ventilen', 'stratashunt']
+  talkanyl: 2; ['talkanyl', 'tracealkanyl']
+  tandbrygga: 2; ['tandbrygga', 'tandbryggor']
+  tandimplantat: 2; ['tandimplantat', 'tandinplantat']
+  tandprotes: 2; ['tandprotes', 'tandproteser']
+  titanclipsen: 2; ['titanclipsen', 'titanstent']
+  uniperc: 2; ['uniperc', 'uniperk']
+  ventilbyte: 2; ['ventilbyte', 'ventilen']
+  veptr-stag: 2; ['veptr-stag', 'vertex-stag']
+  vitalio: 2; ['vitalio', 'vitatron']
+  vns-stimualtor: 2; ['vns-stimualtor', 'vns-stimulatorbatteri']
+  vvi-crtp: 2; ['vvi-crtp', 'vvi-r+crt-p']
+  återimplantation: 2; ['återimplantation', 'återimplantera']
+  kroppstemperatur: 1
+  diastoliskt: 1
+  aktivitetsförmåga: 1
+  remiss: 1
+  slag: 1
+  -------------: 1
+  4-lumenscvk: 1
+  a3dr01: 1
+  activa: 1
+  acuity: 1
+  addrl1: 1
+  akveduktstenos: 1
+  allura: 1
+  alternativbaksträngsstimulator: 1
+  angioseal: 1
+  aortarotplastik: 1
+  ascendakateter: 1
+  ascendensgraft: 1
+  aspirestimulatorn: 1
+  avdelningenpacemakerrytm: 1
+  axs-catalyst-5: 1
+  balkolfen-pumpsbehandlad: 1
+  bicuspidklaff: 1
+  biolprotes: 1
+  bipolärautocapture: 1
+  bivona: 1
+  björ-shiley: 1
+  bradypacing: 1
+  bröstimplantat: 1
+  burstpacing: 1
+  burstprogrammeringen: 1
+  c2tr01: 1
+  CABG: 1
+  carbomedics: 1
+  carboseal: 1
+  carillon-device: 1
+  cavaklaffimplantation: 1
+  cd2277-36q: 1
+  certas-ventil: 1
+  coil-icd-elektrod: 1
+  coroflex: 1
+  cronofivepump: 1
+  crt-implanetrering: 1
+  crtd-inplantation: 1
+  cvk: 1
+  cxorsiro: 1
+  cyberonics: 1
+  dbs-behandling: 1
+  dd2359-40c: 1
+  dens-skruv: 1
+  diafragmastimulering: 1
+  dialyskateter: 1
+  dosgeneratorn: 1
+  dosor: 1
+  dostypen: 1
+  dragonflyoct-kateter: 1
+  drän: 1
+  dtbc2d4: 1
+  dubbelprotes: 1
+  dvmb2d4: 1
+  elan-graft: 1
+  elektrodförlopp: 1
+  ellipse: 1
+  embolisation: 1
+  en1dr01: 1
+  endotak: 1
+  enkabelsystem: 1
+  enrhythm: 1
+  ensura: 1
+  evera: 1
+  excelsior-sl-10: 1
+  extrapacemaker-kontroll: 1
+  eöeltrodunipolär: 1
+  forma-device: 1
+  förmakspace-aktivering: 1
+  förmakstrådimplantation: 1
+  guidantelektroder: 1
+  halo-fixaturbehandling: 1
+  heartmate-bärare: 1
+  helsilikonkateter: 1
+  hemashieldgraft: 1
+  his-ablation: 1
+  hjärtsviktspacemaker: 1
+  hk-elektroden: 1
+  hoffman: 1
+  homograftimplantatin: 1
+  hydrocephalusutveckling: 1
+  hö-shunt: 1
+  iabp: 1
+  icd-dosan: 1
+  icd-kabelendokardit: 1
+  icd-systemet: 1
+  icd-terapierna: 1
+  infinity-elektrod: 1
+  intraventrikulär: 1
+  is1-adapter: 1
+  jejunumkateter: 1
+  jude-device: 1
+  kabelsystemet: 1
+  kablar: 1
+  kammastimulerande: 1
+  kateterklaff: 1
+  klaffbehandling: 1
+  klaffseglen: 1
+  kroniskkateter: 1
+  kärlförslutning: 1
+  lead: 1
+  lenuspumps-operation: 1
+  lima-graftet: 1
+  linq: 1
+  lnq11: 1
+  loop-recordern: 1
+  lumbalkateter: 1
+  m1planeringdeviceimplantation: 1
+  medos-ventil: 1
+  melodyklaff: 1
+  merlin@home-dosa: 1
+  metalltråd: 1
+  micrusframe: 1
+  modell: 1
+  mv-sensor: 1
+  nervusvagusstimulerare: 1
+  neuroform: 1
+  nucleusballong: 1
+  nyinplantering: 1
+  occluder: 1
+  operationpacemakerrytm: 1
+  optisure: 1
+  overdrive-pacing: 1
+  pace-utnyttjande: 1
+  pacebatteriet: 1
+  pacemakerinsättningsindikation: 1
+  pacingkonfiguration: 1
+  pci: 1
+  pci+tryckmätning: 1
+  pci-försök: 1
+  pci-ledaren: 1
+  pci-rotablator: 1
+  pci-åtgärd: 1
+  peg-slangen: 1
+  peritonealdialyskateter: 1
+  picc-line-kateter: 1
+  picco: 1
+  plattelektrod: 1
+  pm-beroende: 1
+  pm-besvär: 1
+  pm-diagnostik: 1
+  pm-funktionen: 1
+  pm-operationen: 1
+  pm-relaterade: 1
+  pm-rytm: 1
+  pm-utskrift: 1
+  pm3120: 1
+  pmhaft: 1
+  pmtryckförband: 1
+  preassurewire: 1
+  proclaimdosa: 1
+  proglide: 1
+  protesinsuff: 1
+  protesklickoch: 1
+  ptc-kateter: 1
+  quatro: 1
+  r-klaff: 1
+  ringplastik: 1
+  ryggmärgsstimulatorutrustningen: 1
+  scaffold-stent: 1
+  scientific: 1
+  scs-dosan: 1
+  scs-implantat: 1
+  scs-instrumentariet: 1
+  scs2088tc: 1
+  selokenpump: 1
+  sensia: 1
+  sesr01: 1
+  ShuntdysfunktionOperation: 1
+  shuntkontroll: 1
+  shuntrevisionen: 1
+  shuntventilbyte: 1
+  shuntöversikt: 1
+  silikon-kad: 1
+  singleelektrod-pacemaker: 1
+  sinuscoronarius-katetern: 1
+  sinusrytmpacemaker: 1
+  smarttouch-kateter: 1
+  smärtstimulator: 1
+  soletra: 1
+  sound-kateter: 1
+  specialsugkatetern: 1
+  spinalstimuleringsutrustning: 1
+  stagfixation: 1
+  stagföringen: 1
+  standard-pm: 1
+  stentgraft: 1
+  stentocklusion: 1
+  stifttänder: 1
+  stimulatoruppföljning: 1
+  stjude: 1
+  Subdurala: 1
+  subduralelektroder: 1
+  subpubis-kateter: 1
+  superstiffledare: 1
+  surescan: 1
+  swann-ganz-kateterisering: 1
+  tampkateter: 1
+  taussig-shunt: 1
+  tendril: 1
+  thalamusstimuleringsutrustning: 1
+  trackbyte: 1
+  trakealtubs-kuffen: 1
+  transvenösopacemaker-förband: 1
+  trialign-devicen: 1
+  trilumen-cvk: 1
+  triucuspidalisring: 1
+  va-shunt: 1
+  venkateter: 1
+  vertex-system: 1
+  vns: 1
+  vns-elektrodspiralerna: 1
+  vns-kabeln: 1
+  vns-systemet: 1
+  VNSDiagnos: 1
+  VNSOp: 1
+  VP: 1
+  vvi-pacemakerimpl: 1
+  vänserelektroden: 1
+  vänster-shunt: 1
+  w1tr06: 1
+  watchman-device: 1
+  xt-rfielder: 1
+  ögonprotes: 1
+  övertrycksventilation: 1
+  övreprotes: 1
