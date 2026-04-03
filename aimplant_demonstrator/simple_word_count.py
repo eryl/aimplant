@@ -15,11 +15,11 @@ def compare_word_lists(list1, list2):
     return common_words
 
 if __name__ == "__main__":
-    #glossary = '/home/abragam23/fedhealth_data/Glossary_only_known_implants.txt'
-    #word_freqs = '/home/abragam23/fedhealth_data/word_frequencies.txt'
+    glossary = '/home/abragam23/fedhealth_data/Glossary_only_known_implants.txt'
+    word_freqs = '/home/abragam23/fedhealth_data/word_frequencies.txt'
     #stop_words_file = '/home/abragam23/fedhealth_data/manual_stop_list.txt'
-    glossary = 'glossary.txt'
-    word_freqs = 'word_freq.txt'
+    #glossary = 'glossary.txt'
+    #word_freqs = 'word_freq.txt'
     stop_words_file = 'combined_stop_words.txt'
 
     # Load stop words from file and combine with NLTK's Swedish stop words
