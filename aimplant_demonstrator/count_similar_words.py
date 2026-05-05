@@ -77,7 +77,7 @@ if __name__ == "__main__":
     #stop_words_file = '/home/abragam23/fedhealth_data/manual_stop_list.txt'
     #glossary = 'glossary.txt'
     #word_freqs = 'word_freq.txt'
-    stop_words_file = 'combined_stop_words.txt'
+    stop_words_file = 'combined_date_stopwords.txt'
 
     # Load stop words from file and combine with NLTK's Swedish stop words
     with open(stop_words_file, 'r', encoding='utf-8') as f:
