@@ -2,7 +2,7 @@ import csv
 from nltk.metrics.distance import jaro_winkler_similarity
 from tqdm import tqdm
 
-def compare_word_lists(list1, list2, threshold=0.85):
+def compare_word_lists(list1, list2, threshold=0.92):
     """
     Compare two word lists using Jaro-Winkler similarity.
     
@@ -103,9 +103,9 @@ if __name__ == "__main__":
     result = compare_word_lists(glossary_words, list(freq_words.keys()))
 
     print(f"Glossary - Original: {len(result['glossary_original'])}, Grouped: {len(result['glossary_grouped'])}")
-    summarize_and_save(result['glossary_grouped'],'glossary_summary.txt')
+    summarize_and_save(result['glossary_grouped'],'glossary_summary_092.txt')
     print(f"Word Frequency List - Unique: {len(result['freq_original'])}, Grouped: {len(result['freq_grouped'])}, Total tokens: {sum(freq_words.values())}")
-    summarize_and_save(result['freq_grouped'],'word_freq_summary.txt')
+    summarize_and_save(result['freq_grouped'],'word_freq_summary_092.txt')
     print(f"Common words: {len(result['common_words'])}:  {result['common_words']}")
 
 
