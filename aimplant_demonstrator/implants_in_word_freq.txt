@@ -1,0 +1,7 @@
+  remiss: 1
+  aktivitetsförmåga: 1
+  slag: 1
+  kroppstemperatur: 1
+  diastoliskt: 1
+  assura: 3 ['assura','assurance','-assura']
+  puls: 1

@@ -33,3 +33,7 @@
   andningsfrekvens: 1
   lungor: 1
   neurologiskt: 1
+  assura: 3 ['assura','assurance','-assura']
+  patient: 4; ['patient', 'patienten', 'patienthistorik', 'pat']
+
+
