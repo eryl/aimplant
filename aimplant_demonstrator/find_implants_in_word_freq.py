@@ -1,5 +1,5 @@
 items = set()
-with open('word_freq_summary_092.txt', 'r', encoding='utf-8') as f:
+with open('word_freq_summary_085.txt', 'r', encoding='utf-8') as f:
     with open('glossary.txt', 'r', encoding='utf-8') as g:
         glossary = [line.strip() for line in g if line.strip()]
         print(f"Loaded {len(glossary)} items from glossary.txt")
